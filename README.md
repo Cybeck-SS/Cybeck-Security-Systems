@@ -1,4 +1,4 @@
-# Cybeck Security Systems v0.1.3
+# Cybeck Security Systems v0.1.4
 
 Local Windows desktop security monitor built with Electron. Run `npm start` from this folder. Run `npm test` for focused checks. `npm run build` creates a Windows installer in `release/`; building does not publish it.
 
@@ -17,3 +17,11 @@ Local Windows desktop security monitor built with Electron. Run `npm start` from
 Connection duration is the time a socket has been observed during the current app session. The 2-second attempt poll can still miss very short attempts; it is not a complete record of failed connections. The connection monitor does not capture packets, inspect payloads, identify domains for each IP, or prove malicious behavior. Process lookup can return `Unknown` when Windows does not expose a process. Network monitoring and history are local to this device.
 
 The updater remains configured separately from these monitoring features.
+
+## Windows distribution
+
+Electron 38 requires Windows 10 or later. The current installer targets 64-bit Intel/AMD Windows; other architectures need separately built and tested installers.
+
+The v0.1.4 GitHub installer is unsigned. Windows may show a SmartScreen or Smart App Control warning, and managed device policy may block it. Do not disable Windows security features or add blanket antivirus exclusions. A trusted publisher signature requires a valid code-signing certificate or signing service; a self-signed certificate does not establish public trust.
+
+For future public releases, supply electron-builder with a trusted code-signing identity (for example `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`) and run `npm run publish`. The publish command requires a valid signature and fails before uploading if signing is unavailable. Verify the resulting installer and app executable with `Get-AuthenticodeSignature` and test on the Windows versions and architectures you intend to support. Even signed new releases may need time to build SmartScreen reputation.

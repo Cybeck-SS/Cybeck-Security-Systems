@@ -1,6 +1,6 @@
 {
   "name": "cybeck-security-systems",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Cybeck Security Systems — personal desktop security command centre",
   "main": "main.js",
   "author": "Cybeck Security Systems",
@@ -8,7 +8,7 @@
     "start": "electron .",
     "test": "node --test",
     "build": "electron-builder --win",
-    "publish": "electron-builder --win --publish always"
+    "publish": "electron-builder --win --publish always --config.forceCodeSigning=true"
   },
   "devDependencies": {
     "electron": "^38.0.0",
@@ -26,7 +26,7 @@
       "!tests/**",
       "!tmp/**",
       "!낈팱ǆ/**",
-      "!RELEASE_NOTES_0.1.3.md"
+      "!RELEASE_NOTES_*.md"
     ],
     "directories": {
       "output": "release"
