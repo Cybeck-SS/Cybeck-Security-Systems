@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self';"
+  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cybeck Security Systems</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-mini">
+        <img src="assets/logo.png" alt="Cybeck SECURITY SYSTEMS logo">
+        <div>
+          <strong>Cybeck</strong>
+          <span>SECURITY SYSTEMS</span>
+        </div>
+      </div>
+
+      <nav>
+
+  <!-- PRIMARY -->
+  <button class="nav-item active" data-page="dashboard">
+    <span class="nav-icon">◇</span>
+    <span>Dashboard</span>
+  </button>
+
+  <button class="nav-item" data-page="operations">
+    <span class="nav-icon">⚙</span>
+    <span>Operations</span>
+  </button>
+
+  <button class="nav-item" data-page="network">
+    <span class="nav-icon">⌁</span>
+    <span>Network Monitor</span>
+  </button>
+
+  <button class="nav-item" data-page="tasks">
+    <span class="nav-icon">✓</span>
+    <span>Tasks</span>
+  </button>
+
+  <button class="nav-item" data-page="notes">
+    <span class="nav-icon">▤</span>
+    <span>Notes</span>
+  </button>
+
+  <!-- SECONDARY -->
+  <div class="nav-divider"></div>
+
+  <button class="nav-item" data-page="vault">
+    <span class="nav-icon">◇</span>
+    <span>Vault</span>
+  </button>
+
+  <button class="nav-item" data-page="settings">
+    <span class="nav-icon">⚙</span>
+    <span>Settings</span>
+  </button>
+
+  <button class="nav-item" data-page="about">
+    <span class="nav-icon">ⓘ</span>
+    <span>About</span>
+  </button>
+
+</nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span>Local system</span>
+        <span class="version">v0.1.3</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">PERSONAL COMMAND CENTRE</div>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        
+
+<div class="window-mode-controls">
+
+    <button
+        id="window-mode-btn"
+        class="window-mode-btn"
+        title="Toggle Fullscreen"
+    >
+        ⛶
+    </button>
+
+</div>
+      </header>
+
+      <section id="dashboard" class="page active-page">
+        <div class="hero">
+          <div class="hero-logo">
+            <img src="assets/logo.png" alt="Master logo">
+          </div>
+          <div class="hero-copy">
+            <div class="eyebrow">Cybeck Security Systems</div>
+            <h2>SECURE SYSTEMS.<br><span>PROTECT FUTURES.</span></h2>
+            <p>Your personal digital command centre — live update system active.</p>
+          </div>
+
+                </div>
+
+
+        <div class="cards">
+
+          <!-- SYSTEM STATUS -->
+          <article class="card">
+            <div class="card-icon">◈</div>
+            <div>
+              <span>SYSTEM STATUS</span>
+              <strong class="good">SECURE</strong>
+              <small>All systems operational</small>
+            </div>
+          </article>
+
+
+          <!-- LIVE NETWORK -->
+          <article class="card network-card">
+
+            <div class="network-visual">
+              <div
+                class="signal-bars"
+                id="signal-bars"
+                title="Wi-Fi Signal Strength"
+              >
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div class="network-info">
+
+              <span>NETWORK</span>
+
+              <strong
+                id="network-status"
+                class="good"
+              >
+                CHECKING...
+              </strong>
+
+              <small id="network-name">
+                Detecting connection
+              </small>
+
+              <div class="network-strength">
+                SIGNAL
+                <span id="network-percent">--%</span>
+              </div>
+
+            </div>
+
+          </article>
+
+
+          <!-- VAULT -->
+          <article class="card">
+            <div class="card-icon">◇</div>
+            <div>
+              <span>VAULT</span>
+              <strong>LOCKED</strong>
+              <small>Your data is protected</small>
+            </div>
+          </article>
+
+
+          <!-- SESSION -->
+          <article class="card">
+            <div class="card-icon">◷</div>
+            <div>
+              <span>SESSION</span>
+              <strong id="session-time">00:00:00</strong>
+              <small>Since application start</small>
+            </div>
+          </article>
+
+        </div>
+
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">SYSTEM OVERVIEW</span>
+            <h3>Command Centre</h3>
+          </div>
+          <button class="ghost-button" id="system-check">Run system check</button>
+        </div>
+
+        <div class="overview">
+          <div class="terminal">
+            <div class="terminal-head">
+              <span></span><span></span><span></span>
+              <label>SECURITY CONSOLE</label>
+            </div>
+            <div class="terminal-body" id="console">
+              <p><b>[OK]</b> Application initialized.</p>
+              <p><b>[OK]</b> Local environment ready.</p>
+              <p><b>[OK]</b> Security core standing by.</p>
+              <p><b>[WAIT]</b> Awaiting your next command...</p>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="action" data-page="vault">
+              <span>◇</span><div><b>Open Vault</b><small>Secure information storage</small></div>
+            </button>
+            <button class="action" data-page="notes">
+              <span>▤</span><div><b>New Note</b><small>Capture information quickly</small></div>
+            </button>
+            <button class="action" data-page="tasks">
+              <span>✓</span><div><b>Tasks</b><small>Track what needs to be done</small></div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+<!-- ======================================================
+     OPERATIONS
+     ====================================================== -->
+
+<section id="operations" class="page">
+  <div class="eyebrow">CYBECK OPERATIONS CENTRE</div>
+  <h2>Live Operations</h2>
+  <p class="ops-intro">Current network observations, incidents, and local history.</p>
+  <div class="ops-metrics">
+    <article><span>SYSTEM STATUS</span><strong id="ops-system-status">CHECKING</strong></article>
+    <article><span>NETWORK</span><strong id="ops-network-status">CHECKING</strong></article>
+    <article><span>ACTIVE ALERTS</span><strong id="ops-active-alerts">0</strong></article>
+    <article><span>OPEN INCIDENTS</span><strong id="ops-open-incidents">0</strong></article>
+  </div>
+  <div class="ops-columns">
+    <article class="network-panel"><div class="network-panel-heading"><span class="network-panel-icon">◈</span><div><h3>Monitoring Modules</h3><p>Local observation status</p></div></div>
+      <div class="security-analysis-list"><div><span>Network Monitor</span><strong id="ops-module-network">ACTIVE</strong></div><div><span>Connection Monitor</span><strong id="ops-module-connections">CHECKING</strong></div><div><span>Event Analysis</span><strong>ACTIVE</strong></div><div><span>Incident Monitoring</span><strong>ACTIVE</strong></div></div>
+      <button class="network-primary-btn" type="button" data-page="network">Open Network Monitor</button>
+    </article>
+    <article class="network-panel"><div class="network-panel-heading"><span class="network-panel-icon">▤</span><div><h3>Recent Security Activity</h3><p>Current session and saved local events</p></div></div><div id="ops-recent-activity" class="ops-activity">No activity recorded yet.</div></article>
+  </div>
+  <article class="network-panel ops-history"><div class="network-panel-heading"><span class="network-panel-icon">◷</span><div><h3>Monitoring History</h3><p>Totals saved locally on this device</p></div></div>
+    <div class="ops-metrics"><div><span>TODAY</span><strong id="ops-today">--</strong></div><div><span>LAST 7 DAYS</span><strong id="ops-week">--</strong></div><div><span>LAST 30 DAYS</span><strong id="ops-month">--</strong></div></div><small id="ops-storage-status">Loading local history…</small>
+  </article>
+</section>
+
+      <section id="vault" class="page">
+        <div class="placeholder">
+          <div class="placeholder-logo">◇</div>
+          <h2>Vault</h2>
+          <p>This is intentionally locked for Version 0.1.</p>
+          <small>We will design and stress-test the security model before storing real information.</small>
+        </div>
+      </section>
+
+      <section id="notes" class="page">
+        <div class="placeholder">
+          <div class="placeholder-logo">▤</div>
+          <h2>Notes</h2>
+          <p>Notes system coming next.</p>
+          <small>We will build local storage first, then add search, editing and deletion.</small>
+        </div>
+      </section>
+
+      <section id="tasks" class="page">
+        <div class="placeholder">
+          <div class="placeholder-logo">✓</div>
+          <h2>Tasks</h2>
+          <p>Task management is not enabled yet.</p>
+          <small>Nothing gets added until the data model is tested.</small>
+        </div>
+      </section>
+      <section id="network" class="page">
+        <div class="network-monitor-dashboard">
+
+<!-- FLOATING QUICK ACTIONS -->
+
+<div class="network-quick-dropdown" id="network-quick-dropdown">
+
+  <button
+    class="network-quick-toggle"
+    id="network-quick-toggle"
+    type="button"
+    aria-label="Quick Actions"
+    aria-controls="network-quick-menu"
+    aria-expanded="false"
+    title="Quick Actions"
+  >
+    <span class="network-quick-toggle-icon">◇</span>
+
+    <span>Quick Actions</span>
+
+    <span
+      class="network-quick-chevron"
+      id="network-quick-chevron"
+    >
+      ›
+    </span>
+  </button>
+
+
+  <div
+    class="network-quick-menu"
+    id="network-quick-menu"
+    hidden
+  >
+
+    <button id="nm-quick-refresh">
+      ↻
+      <span>Refresh Network</span>
+    </button>
+
+    <button id="nm-test-internet">
+      ◎
+      <span>Test Internet</span>
+    </button>
+
+    <button id="nm-ping-gateway">
+      ⌁
+      <span>Verify Gateway</span>
+    </button>
+
+    <button id="nm-view-details">
+      ▤
+      <span>Diagnostics Summary</span>
+    </button>
+
+  </div>
+
+</div>
+
+          <div class="network-live-strip">
+            <div>
+              <div class="eyebrow">LIVE NETWORK DIAGNOSTICS</div>
+              <p>Know your connection. Monitor the essentials. Stay secure.</p>
+            </div>
+
+            <div class="network-live-meta">
+              <div class="network-live-state">
+                <span class="network-live-dot"></span>
+                <div>
+                  <span>LIVE MONITORING</span>
+                  <strong id="nm-live-state">ACTIVE</strong>
+                </div>
+              </div>
+
+              <div class="network-last-update">
+                <span>LAST UPDATED</span>
+                <strong id="nm-last-updated">--:--:--</strong>
+                <small>Auto refresh: 5s</small>
+              </div>
+            </div>
+          </div>
+
+          <article class="network-hero-panel">
+            <div class="network-orb-wrap">
+              <div class="network-orb" aria-hidden="true">
+                <div class="network-orb-core"></div>
+                <div class="network-orb-ring ring-one"></div>
+                <div class="network-orb-ring ring-two"></div>
+                <div class="network-orb-axis axis-one"></div>
+                <div class="network-orb-axis axis-two"></div>
+                <div class="network-orb-scan"></div>
+              </div>
+              <div class="network-orb-status">
+                <strong id="nm-orb-status">CHECKING</strong>
+                <span>SECURE CONNECTION</span>
+              </div>
+            </div>
+
+            <div class="network-hero-copy">
+              <div class="eyebrow">NETWORK STATUS</div>
+              <h2 id="nm-status">CHECKING</h2>
+              <p id="nm-status-copy">Cybeck is reading your active network connection.</p>
+
+              <div class="network-hero-actions">
+                <button class="network-primary-btn" id="nm-refresh-btn">↻&nbsp;&nbsp; Refresh Network</button>
+                <button class="ghost-button" id="nm-diagnostics-btn">⌁&nbsp;&nbsp; Run Diagnostics</button>
+              </div>
+            </div>
+
+            <div class="network-metric-grid">
+              <div class="network-metric-card">
+                <span>CONNECTION TYPE</span>
+                <div class="network-metric-icon">⌁</div>
+                <strong id="nm-connection-type">--</strong>
+                <small>Active interface</small>
+              </div>
+
+              <div class="network-metric-card">
+                <span>SIGNAL STRENGTH</span>
+                <div class="network-metric-icon">▥</div>
+                <strong id="nm-signal">--%</strong>
+                <small id="nm-signal-label">Checking</small>
+              </div>
+
+              <div class="network-metric-card">
+                <span>LATENCY</span>
+                <div class="network-metric-icon">ϟ</div>
+                <strong id="nm-latency">-- ms</strong>
+                <small id="nm-latency-label">Checking</small>
+              </div>
+
+              <div class="network-metric-card">
+                <span>INTERNET ACCESS</span>
+                <div class="network-metric-icon">◎</div>
+                <strong id="nm-internet">CHECKING</strong>
+                <small id="nm-internet-label">Reachability test</small>
+              </div>
+
+              <div class="network-signal-track">
+                <div class="network-signal-fill" id="nm-signal-fill"></div>
+                <span id="nm-signal-track-value">--%</span>
+              </div>
+              <div class="network-signal-caption">
+                <span>WEAK SIGNAL</span>
+                <span>STABLE CONNECTION</span>
+                <span>STRONG SIGNAL</span>
+              </div>
+            </div>
+          </article>
+
+          <div class="network-information-grid">
+
+            <article class="network-panel">
+              <div class="network-panel-heading">
+                <span class="network-panel-icon">▣</span>
+                <div>
+                  <h3>Connection Details</h3>
+                  <p>Your current network connection information</p>
+                </div>
+              </div>
+
+              <div class="network-data-list">
+                <div class="network-data-row"><span>SSID</span><strong id="nm-ssid">--</strong></div>
+                <div class="network-data-row"><span>Connection Type</span><strong id="nm-type-detail">--</strong></div>
+                <div class="network-data-row">
+                  <span>Signal Strength</span>
+                  <strong id="nm-signal-detail">--%</strong>
+                </div>
+                <div class="network-data-row">
+                  <span>Internet Status</span>
+                  <strong id="nm-internet-detail">--</strong>
+                </div>
+                <div class="network-data-row"><span>Latency (1.1.1.1)</span><strong id="nm-latency-detail">-- ms</strong></div>
+                <div class="network-data-row"><span>Connection Quality</span><strong class="network-badge" id="nm-quality">CHECKING</strong></div>
+              </div>
+            </article>
+
+            <article class="network-panel">
+              <div class="network-panel-heading">
+                <span class="network-panel-icon">◇</span>
+                <div>
+                  <h3>Network Identity</h3>
+                  <p>Your device's local network addressing information</p>
+                </div>
+              </div>
+
+              <div class="network-data-list">
+                <div class="network-data-row"><span>IPv4 Address</span><strong id="nm-ipv4">--</strong></div>
+                <div class="network-data-row"><span>Default Gateway</span><strong id="nm-gateway">--</strong></div>
+                <div class="network-data-row"><span>DNS Servers</span><strong id="nm-dns">--</strong></div>
+                <div class="network-data-row"><span>Internet Route</span><strong id="nm-route">Checking...</strong></div>
+              </div>
+            </article>
+
+          </div>
+
+          <div class="network-bottom-grid">
+
+            <article class="network-panel">
+              <div class="network-panel-heading">
+                <span class="network-panel-icon">◉</span>
+                <div>
+                  <h3>Network Adapter</h3>
+                  <p>Active adapter information</p>
+                </div>
+              </div>
+
+              <div class="network-data-list">
+                <div class="network-data-row"><span>Adapter Name</span><strong id="nm-adapter">--</strong></div>
+                <div class="network-data-row"><span>Interface Description</span><strong id="nm-interface-description">--</strong></div>
+                <div class="network-data-row"><span>MAC Address</span><strong id="nm-mac">--</strong></div>
+                <div class="network-data-row"><span>Link Speed</span><strong id="nm-link-speed">--</strong></div>
+                <div class="network-data-row"><span>Status</span><strong id="nm-adapter-status">--</strong></div>
+              </div>
+            </article>
+
+            <article class="network-panel network-health-panel">
+              <div class="network-panel-heading">
+                <span class="network-panel-icon">◈</span>
+                <div>
+                  <h3>Connection Health</h3>
+                  <p>Real-time connection analysis</p>
+                </div>
+              </div>
+
+              <div class="network-health-gauges">
+                <div class="network-gauge">
+                  <div class="network-gauge-ring" id="nm-signal-gauge" style="--value:0">
+                    <strong id="nm-signal-gauge-value">--%</strong>
+                  </div>
+                  <span>SIGNAL</span>
+                  <small id="nm-signal-gauge-label">Checking</small>
+                </div>
+
+                <div class="network-gauge">
+                  <div class="network-gauge-ring" id="nm-latency-gauge" style="--value:0">
+                    <strong id="nm-latency-gauge-value">--</strong>
+                  </div>
+                  <span>LATENCY</span>
+                  <small id="nm-latency-gauge-label">Checking</small>
+                </div>
+
+                <div class="network-gauge">
+                  <div class="network-gauge-ring" id="nm-stability-gauge" style="--value:0">
+                    <strong id="nm-stability-gauge-value">--%</strong>
+                  </div>
+                  <span>REACHABILITY</span>
+                  <small id="nm-stability-gauge-label">Checking</small>
+                </div>
+              </div>
+
+              <div class="network-health-summary" id="nm-health-summary">
+                <span>◈</span>
+                <div>
+                  <strong>Analysing Connection</strong>
+                  <small>Cybeck is checking your network health.</small>
+                </div>
+              </div>
+            </article>
+
+          </div>
+
+          <div class="network-diagnostic-console" id="nm-diagnostic-console" hidden>
+            <div class="network-diagnostic-head">
+              <div>
+                <div class="eyebrow">DIAGNOSTICS SUMMARY</div>
+                <h3>Cybeck Network Analysis</h3>
+              </div>
+              <button class="ghost-button" id="nm-close-diagnostics">Close</button>
+            </div>
+            <div class="terminal-body" id="nm-diagnostic-output"></div>
+          </div>
+<!-- ======================================================
+     NETWORK SECURITY MONITORING - PHASE 1
+     ====================================================== -->
+
+<section class="security-monitor-panel" id="security-monitor-panel">
+
+  <div class="security-monitor-header">
+
+    <div>
+      <div class="eyebrow">NETWORK SECURITY MONITORING</div>
+
+      <h3>Security Event Monitor</h3>
+
+      <p>
+        Continuous observation of Cybeck network telemetry
+        for connection changes and unusual network events.
+      </p>
+    </div>
+
+    <div class="security-monitor-state">
+      <span class="security-monitor-dot"></span>
+
+      <div>
+        <span>MONITORING</span>
+        <strong id="security-monitor-status">ACTIVE</strong>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="security-summary-grid">
+
+    <article class="security-summary-card">
+
+      <span>CURRENT RISK</span>
+
+      <strong
+        id="security-risk-level"
+        class="security-risk-low"
+      >
+        LOW
+      </strong>
+
+      <small id="security-risk-description">
+        No unusual activity detected
+      </small>
+
+    </article>
+
+
+    <article class="security-summary-card">
+
+      <span>SECURITY EVENTS</span>
+
+      <strong id="security-event-count">
+        0
+      </strong>
+
+      <small>
+        Events this session
+      </small>
+
+    </article>
+
+
+    <article class="security-summary-card">
+
+      <span>ACTIVE ALERTS</span>
+
+      <strong id="security-alert-count">
+        0
+      </strong>
+
+      <small>
+        Events requiring attention
+      </small>
+
+    </article>
+
+
+    <article class="security-summary-card">
+
+      <span>LAST ANALYSIS</span>
+
+      <strong id="security-last-analysis">
+        --:--:--
+      </strong>
+
+      <small>
+        Live network analysis
+      </small>
+
+    </article>
+
+  </div>
+
+  <article class="network-panel security-session-panel" aria-labelledby="security-session-heading">
+    <div class="network-panel-heading">
+      <span class="network-panel-icon">◷</span>
+      <div>
+        <h3 id="security-session-heading">Session Statistics</h3>
+        <p>Live measurements since monitoring began</p>
+      </div>
+    </div>
+    <div class="security-stat-grid">
+      <div><span>Monitoring Duration</span><strong id="session-monitor-duration">00:00:00</strong></div>
+      <div><span>Events</span><strong id="session-events">0</strong></div>
+      <div><span>Active Alerts</span><strong id="session-active-alerts">0</strong></div>
+      <div><span>Resolved Alerts</span><strong id="session-resolved-alerts">0</strong></div>
+      <div><span>Network Outages</span><strong id="session-network-outages">0</strong></div>
+      <div><span>Internet Outages</span><strong id="session-internet-outages">0</strong></div>
+      <div><span>Total Downtime</span><strong id="session-total-downtime">00:00:00</strong></div>
+      <div><span>Longest Outage</span><strong id="session-longest-outage">00:00:00</strong></div>
+      <div><span>Network Changes</span><strong id="session-network-changes">0</strong></div>
+      <div><span>Gateway Changes</span><strong id="session-gateway-changes">0</strong></div>
+      <div><span>Lowest Signal</span><strong id="session-lowest-signal">--</strong></div>
+      <div><span>Current Signal</span><strong id="session-current-signal">--</strong></div>
+      <div><span>Average Signal</span><strong id="session-average-signal">--</strong></div>
+      <div><span>Signal Stability</span><strong id="session-signal-stability">--</strong></div>
+      <div><span>Average Recovery Time</span><strong id="session-recovery-time">--</strong></div>
+      <div><span>Connection Reliability</span><strong id="session-reliability">--</strong></div>
+    </div>
+  </article>
+
+
+  <div class="security-monitor-grid">
+
+    <!-- ANOMALY DETECTION -->
+
+    <article class="network-panel security-anomaly-panel">
+
+      <div class="network-panel-heading">
+
+        <span class="network-panel-icon">◈</span>
+
+        <div>
+          <h3>Anomaly Detection</h3>
+
+          <p>
+            Network state and connection behaviour analysis
+          </p>
+        </div>
+
+      </div>
+
+      <div
+        class="security-anomaly-state"
+        id="security-anomaly-state"
+      >
+
+        <span
+    class="security-anomaly-icon"
+    id="security-anomaly-icon"
+>
+    ✓
+</span>
+
+        <div>
+
+          <strong id="security-anomaly-title">
+            No Anomalies Detected
+          </strong>
+
+          <small id="security-anomaly-description">
+            Cybeck has not detected unusual network
+            behaviour during this session.
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <div class="security-analysis-list">
+
+        <div>
+          <span>Internet</span>
+          <strong id="security-internet-state">
+            CHECKING
+          </strong>
+        </div>
+
+        <div>
+          <span>Network</span>
+          <strong id="security-network-state">
+            CHECKING
+          </strong>
+        </div>
+
+        <div>
+          <span>Signal</span>
+          <strong id="security-signal-state">
+            CHECKING
+          </strong>
+        </div>
+
+        <div>
+          <span>Gateway</span>
+          <strong id="security-gateway-state">
+            CHECKING
+          </strong>
+        </div>
+
+      </div>
+
+    </article>
+
+
+    <!-- SECURITY EVENT TIMELINE -->
+
+    <article class="network-panel security-events-panel">
+
+      <div class="network-panel-heading">
+
+        <span class="network-panel-icon">▤</span>
+
+        <div>
+          <h3>Security Event Timeline</h3>
+
+          <p>
+            Network events detected during this session
+          </p>
+        </div>
+
+      </div>
+
+      <div class="security-event-filters" role="group" aria-label="Filter security events">
+        <button type="button" class="active" data-event-filter="ALL" aria-pressed="true">ALL</button>
+        <button type="button" data-event-filter="INFO" aria-pressed="false">INFO</button>
+        <button type="button" data-event-filter="NETWORK" aria-pressed="false">NETWORK</button>
+        <button type="button" data-event-filter="WARNING" aria-pressed="false">WARNING</button>
+        <button type="button" data-event-filter="ALERT" aria-pressed="false">ALERT</button>
+        <button type="button" data-event-filter="RESOLVED" aria-pressed="false">RESOLVED</button>
+      </div>
+
+
+      <div
+        class="security-event-timeline"
+        id="security-event-timeline"
+      >
+
+        <div class="security-empty-events">
+
+          <span>◇</span>
+
+          <strong>
+            Monitoring Network
+          </strong>
+
+          <small>
+            Security events will appear here when
+            Cybeck detects a network state change.
+          </small>
+
+        </div>
+
+      </div>
+
+    </article>
+
+  </div>
+
+</section>
+
+<section class="network-panel connection-monitor-panel" aria-labelledby="connections-heading">
+  <div class="network-panel-heading"><span class="network-panel-icon">◎</span><div><h3 id="connections-heading">Active Connections</h3><p>Local TCP and UDP snapshot every 15 seconds; TCP attempts sampled every 2 seconds</p></div></div>
+  <div class="connection-toolbar"><span id="connection-scan-status">Waiting for connection scan…</span><button type="button" id="refresh-connections">Refresh Connections</button></div>
+  <div class="connection-table-wrap"><table class="connection-table"><thead><tr><th>PROCESS</th><th>LOCAL ADDRESS</th><th>REMOTE ADDRESS</th><th>PORT</th><th>PROTOCOL</th><th>STATE</th><th>OBSERVED</th></tr></thead><tbody id="connection-rows"><tr><td colspan="7">Collecting local connections…</td></tr></tbody></table></div>
+</section>
+
+<section class="network-panel incidents-panel" aria-labelledby="incidents-heading">
+  <div class="network-panel-heading"><span class="network-panel-icon">◇</span><div><h3 id="incidents-heading">Incidents</h3><p>Review notable observations and record response decisions</p></div></div>
+  <div id="incident-list" class="incident-list">No incidents recorded.</div>
+</section>
+
+          <div class="about-footer network-footer">
+            <span>CYBECK SECURITY SYSTEMS</span>
+            <span>Secure Systems. Protect Futures.</span>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="placeholder">
+          <div class="placeholder-logo">⚙</div>
+          <h2>Settings</h2>
+          <p>Application settings will live here.</p>
+          <small>Theme, startup behaviour, security preferences and storage controls will be added deliberately.</small>
+        </div>
+      </section>
+
+      <section id="about" class="page">
+
+  <div class="about-dashboard">
+
+    <!-- APPLICATION IDENTITY -->
+    <div class="about-hero">
+
+      <img
+        src="assets/logo.png"
+        alt="Cybeck Security Systems logo"
+        class="about-logo"
+      >
+
+      <div class="about-identity">
+
+        <div class="eyebrow">
+          APPLICATION INFORMATION
+        </div>
+
+        <h2>
+          CYBECK SECURITY SYSTEMS
+        </h2>
+
+        <p class="about-tagline">
+          Secure systems. Protect futures.
+        </p>
+
+        <div class="about-meta">
+
+          <div class="about-meta-item">
+            <span>VERSION</span>
+            <strong id="app-version">Loading...</strong>
+          </div>
+
+          <div class="about-meta-item">
+            <span>BUILD DATE</span>
+            <strong id="app-build-date">Loading...</strong>
+          </div>
+
+          <div class="about-meta-item">
+            <span>CHANNEL</span>
+            <strong id="app-channel">Loading...</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- UPDATE AND RELEASE INFORMATION -->
+    <div class="about-grid">
+
+      <article class="about-card">
+
+        <div class="about-card-icon">
+          ↻
+        </div>
+
+        <div>
+
+          <div class="eyebrow">
+            UPDATE STATUS
+          </div>
+
+          <h3 id="update-status">
+            LOCAL BUILD
+          </h3>
+
+          <p id="update-message">
+            Online update checking has not been connected yet.
+          </p>
+
+          <div class="update-controls">
+
+  <button
+    class="ghost-button"
+    id="check-update-btn"
+  >
+    Check for Updates
+  </button>
+
+  <button
+    class="ghost-button"
+    id="download-update-btn"
+    hidden
+  >
+    Download Update
+  </button>
+
+  <button
+    class="ghost-button"
+    id="install-update-btn"
+    hidden
+  >
+    Restart & Install
+  </button>
+
+</div>
+
+
+<div
+  class="update-progress"
+  id="update-progress"
+  hidden
+>
+
+  <div class="update-progress-track">
+
+    <div
+      class="update-progress-fill"
+      id="update-progress-fill"
+    ></div>
+
+  </div>
+
+  <span id="update-progress-text">
+    0%
+  </span>
+
+</div>
+
+<div
+  class="latest-version"
+  id="latest-version"
+  hidden
+>
+  Latest release:
+  <strong id="latest-version-number">
+    --
+  </strong>
+</div>
+
+      </article>
+
+
+      <article class="about-card">
+
+        <div class="eyebrow">
+          CURRENT RELEASE
+        </div>
+
+        <h3>
+  Version <span id="release-version">0.1.3</span>
+</h3>
+
+<ul class="release-notes">
+  <li>Expanded network monitoring with session statistics and event filters.</li>
+  <li>Added connection observations, incident workflows, and Operations summaries.</li>
+  <li>Added encrypted local history and PDF or JSON incident reports.</li>
+</ul>
+
+        <ul class="release-notes">
+
+          <li>
+            Introduced Cybeck Security Systems branding.
+          </li>
+
+          <li>
+            Added fullscreen and windowed display support.
+          </li>
+
+          <li>
+            Added live Wi-Fi signal strength monitoring.
+          </li>
+
+          <li>
+            Added application system-check console.
+          </li>
+
+          <li>
+            Added application information and release tracking.
+          </li>
+
+        </ul>
+
+      </article>
+
+    </div>
+
+
+    <!-- RELEASE HISTORY -->
+    <article class="about-card release-history">
+
+      <div class="eyebrow">
+        RELEASE HISTORY
+      </div>
+
+      <div class="release-entry">
+
+        <div class="release-version">
+          v0.1.0
+        </div>
+
+        <div class="release-description">
+
+          <strong>
+            Initial Cybeck Foundation
+          </strong>
+
+          <span>
+            Core dashboard, window controls, live network monitoring
+            and application identity established.
+          </span>
+
+        </div>
+
+        <div class="release-date">
+          25 AUG 2026
+        </div>
+
+      </div>
+
+    </article>
+
+
+    <div class="about-footer">
+
+      <span>
+        CYBECK SECURITY SYSTEMS
+      </span>
+
+      <span>
+        Secure Systems. Protect Futures.
+      </span>
+
+    </div>
+
+  </div>
+
+</section>
+
+  <script src="renderer.js"></script>
+  <script src="security-operations.js"></script>
+</body>
+</html>
