@@ -71,8 +71,14 @@
         if (!history.events.length) { box.textContent = "No activity recorded yet."; return; }
         for (const event of history.events.slice(0, 10)) {
             const row = el("div", "ops-activity-row");
+            const task = el("button", "", "Create task");
+            task.type = "button";
+            task.dataset.createWork = "task";
+            task.dataset.workSource = "operations";
+            task.dataset.workTitle = `Review ${event.type.toLowerCase()} event`;
+            task.dataset.workReference = `${event.time} · ${event.message}`.slice(0, 180);
             row.append(el("time", "", new Date(event.time).toLocaleString()),
-                el("strong", "", event.type), el("span", "", event.message));
+                el("strong", "", event.type), el("span", "", event.message), task);
             box.append(row);
         }
     }
@@ -162,6 +168,13 @@
             card.append(head, el("p", "", incident.evidence),
                 el("small", "", `Detected ${new Date(incident.detected).toLocaleString()} · ${incident.process} · ${incident.remoteAddress}:${incident.remotePort || "—"}`));
             const controls = el("div", "incident-controls");
+            const followUp = el("button", "", "Create task");
+            followUp.type = "button";
+            followUp.dataset.createWork = "task";
+            followUp.dataset.workSource = "network";
+            followUp.dataset.workTitle = `Investigate ${incident.id}`;
+            followUp.dataset.workReference = incident.id;
+            controls.append(followUp);
             for (const [action, label] of [
                 ["investigate", "Investigate"], ["contain", "Mark for Containment"],
                 ["resolve", "Resolve"], ["false-positive", "False Positive"],

@@ -132,6 +132,14 @@
                 : result.error;
         } catch (error) { anyDeskStatus.textContent = `AnyDesk could not open: ${error.message}`; }
     });
+    get("ops-anydesk-disconnect").addEventListener("click", async () => {
+        if (!window.confirm("Close the entire local AnyDesk app? This will end all AnyDesk sessions on this PC.")) return;
+        anyDeskStatus.textContent = "Closing AnyDesk…";
+        try {
+            const result = await bridge.closeAnyDeskApp();
+            anyDeskStatus.textContent = result.closed ? "AnyDesk closed. Local sessions ended." : result.error;
+        } catch (error) { anyDeskStatus.textContent = `AnyDesk could not be closed: ${error.message}`; }
+    });
     get("ops-anydesk-download").addEventListener("click", async () => {
         try {
             const result = await bridge.openAnyDeskDownload();

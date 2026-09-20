@@ -14,9 +14,11 @@ const { shellSpec, runCommand } = require("./operations-shell");
 const { createSessionAccess } = require("./operations-access");
 const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
 const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, validateAnyDeskAddress, findAnyDesk, verifyAnyDeskExecutable } = require("./anydesk-integration");
+const { normalizeWorkItems } = require("./work-items-store");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
+const workItemsPath = () => path.join(app.getPath("userData"), "work-items.json");
 let previousConnectionScan = null;
 
 ipcMain.handle("get-connection-attempts", async () => {
@@ -98,6 +100,54 @@ ipcMain.handle("save-security-history", async (_event, supplied) => {
         console.error("[SECURITY] History save failed:", error);
         return false;
     }
+});
+
+ipcMain.handle("load-work-items", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const stored = JSON.parse(await fs.readFile(workItemsPath(), "utf8"));
+        if (!stored.encrypted) throw new Error("Unencrypted work items file rejected.");
+        return normalizeWorkItems(JSON.parse(safeStorage.decryptString(Buffer.from(stored.data, "base64"))));
+    } catch (error) {
+        return error.code === "ENOENT" ? { schema: 1, tasks: [], notes: [] } : { error: `Work items could not be read: ${error.message}` };
+    }
+});
+
+ipcMain.handle("save-work-items", async (event, supplied) => {
+    if (!isLocalOperationsWindow(event)) return { saved: false, error: "Local Cybeck window required." };
+    try {
+        if (!safeStorage.isEncryptionAvailable()) throw new Error("Windows encryption is unavailable.");
+        const data = normalizeWorkItems(supplied);
+        const destination = workItemsPath();
+        const temporary = `${destination}.tmp`;
+        const encrypted = safeStorage.encryptString(JSON.stringify(data));
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        await fs.writeFile(temporary, JSON.stringify({ encrypted: true, data: encrypted.toString("base64") }), "utf8");
+        await fs.rename(temporary, destination);
+        return { saved: true, data };
+    } catch (error) { return { saved: false, error: error.message }; }
+});
+
+ipcMain.handle("export-work-items", async (event, supplied) => {
+    if (!isLocalOperationsWindow(event)) return { saved: false, error: "Local Cybeck window required." };
+    try {
+        const data = normalizeWorkItems(supplied);
+        const result = await dialog.showSaveDialog(mainWindow, { title: "Export Tasks and Notes", defaultPath: "cybeck-work-items.json", filters: [{ name: "JSON", extensions: ["json"] }] });
+        if (result.canceled || !result.filePath) return { canceled: true };
+        await fs.writeFile(result.filePath, JSON.stringify(data, null, 2), { encoding: "utf8", flag: "w" });
+        return { saved: true };
+    } catch (error) { return { saved: false, error: error.message }; }
+});
+
+ipcMain.handle("import-work-items", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const result = await dialog.showOpenDialog(mainWindow, { title: "Import Tasks and Notes", properties: ["openFile"], filters: [{ name: "JSON", extensions: ["json"] }] });
+        if (result.canceled || !result.filePaths.length) return { canceled: true };
+        const file = await fs.readFile(result.filePaths[0], "utf8");
+        if (file.length > 6 * 1024 * 1024) throw new Error("File exceeds 6 MB limit.");
+        return { data: normalizeWorkItems(JSON.parse(file)) };
+    } catch (error) { return { error: `Import failed: ${error.message}` }; }
 });
 
 ipcMain.handle("export-incident-report", async (_event, report) => {
@@ -352,6 +402,15 @@ ipcMain.handle("open-anydesk-session", async (event, suppliedAddress) => {
         });
         return { opened: true, path: file };
     } catch (error) { return { opened: false, error: `AnyDesk could not open: ${error.message}` }; }
+});
+
+ipcMain.handle("close-anydesk-app", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { closed: false, error: "Local Cybeck window required." };
+    if (process.platform !== "win32") return { closed: false, error: "Available on Windows only." };
+    try {
+        await execFileAsync("taskkill.exe", ["/IM", "AnyDesk.exe", "/T", "/F"], { windowsHide: true, timeout: 10000 });
+        return { closed: true };
+    } catch (error) { return { closed: false, error: "AnyDesk could not be closed. End the session in AnyDesk directly." }; }
 });
 
 let selectedAnyDeskPath = null;

@@ -37,4 +37,4 @@ Cybeck Connect is a companion feature for attended screen sharing and remote con
 
 ## Current status
 
-Cybeck Connect is planned and is not included in v0.1.10. Existing Remote Systems supports SSH commands, the Windows RDP client, an RDP port check, Quick Assist, and an AnyDesk launcher that detects installed or portable signed AnyDesk executables. AnyDesk opens its own window and handles its own remote session; Cybeck does not embed its viewer or bundle its software.
+Cybeck Connect is planned and is not included in v0.1.11. Existing Remote Systems supports SSH commands, the Windows RDP client, an RDP port check, Quick Assist, and an AnyDesk launcher that detects installed or portable signed AnyDesk executables. AnyDesk opens its own window and handles its own remote session; Cybeck does not embed its viewer or bundle its software.

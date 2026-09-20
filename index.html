@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.10</span>
+        <span class="version">v0.1.11</span>
       </div>
     </aside>
 
@@ -232,6 +232,7 @@
   <div class="eyebrow">CYBECK OPERATIONS CENTRE</div>
   <h2>Live Operations</h2>
   <p class="ops-intro">Current network observations, incidents, and local history.</p>
+  <div class="work-shortcuts"><button type="button" data-create-work="task" data-work-source="operations">New Operations task</button><button type="button" data-create-work="note" data-work-source="operations">New Operations note</button></div>
   <div class="ops-metrics">
     <article><span>SYSTEM STATUS</span><strong id="ops-system-status">CHECKING</strong></article>
     <article><span>NETWORK</span><strong id="ops-network-status">CHECKING</strong></article>
@@ -285,7 +286,7 @@
     <small>Windows Home cannot receive Remote Desktop connections. For a Home PC, open Quick Assist on both computers; the second PC enters your code and approves screen sharing and control. RDP requires a supported Windows host with Remote Desktop enabled. SSH access is separate from screen sharing.</small>
     <div class="ops-anydesk">
       <label for="ops-anydesk-address">ANYDESK ID OR ALIAS<input id="ops-anydesk-address" type="text" maxlength="51" autocomplete="off" spellcheck="false" placeholder="123 456 789 or secondpc@ad"></label>
-      <div class="ops-remote-actions"><button type="button" id="ops-anydesk-connect">Connect with AnyDesk</button><button type="button" id="ops-anydesk-choose">Choose AnyDesk.exe</button><button type="button" id="ops-anydesk-download">Get AnyDesk</button><span id="ops-anydesk-status" role="status" aria-live="polite">Checking for AnyDesk…</span></div>
+      <div class="ops-remote-actions"><button type="button" id="ops-anydesk-connect">Connect with AnyDesk</button><button type="button" id="ops-anydesk-disconnect">Close AnyDesk / End Sessions</button><button type="button" id="ops-anydesk-choose">Choose AnyDesk.exe</button><button type="button" id="ops-anydesk-download">Get AnyDesk</button><span id="ops-anydesk-status" role="status" aria-live="polite">Checking for AnyDesk…</span></div>
       <small>Install AnyDesk on both computers. Cybeck starts the connection request; AnyDesk handles screen sharing, sign-in, permissions, and updates. Cybeck does not store an AnyDesk password.</small>
     </div>
     <label class="ops-remote-command-label" for="ops-remote-command">REMOTE COMMAND</label>
@@ -306,24 +307,17 @@
       </section>
 
       <section id="notes" class="page">
-        <div class="placeholder">
-          <div class="placeholder-logo">▤</div>
-          <h2>Notes</h2>
-          <p>Notes system coming next.</p>
-          <small>We will build local storage first, then add search, editing and deletion.</small>
-        </div>
+        <div class="work-header"><div><span class="eyebrow">CYBECK WORKSPACE</span><h2>Notes</h2><p>Capture investigation details and organize them by urgency.</p></div><div class="work-actions"><button type="button" data-work-export>Export JSON</button><button type="button" data-work-import>Import JSON</button></div></div>
+        <div class="work-layout"><section class="work-panel"><h3>Urgency cycle</h3><div class="note-cycle" aria-label="Note urgency"><button type="button" id="note-cycle-prev" aria-label="Previous urgency">‹</button><div id="note-cycle-stage" class="note-cycle-stage"></div><button type="button" id="note-cycle-next" aria-label="Next urgency">›</button></div><p class="work-hint">Use the arrows to rotate categories. Select a card to filter notes.</p><h3>Saved notes</h3><div id="notes-list" class="work-list"></div></section><section class="work-panel"><h3 id="note-form-heading">New note</h3><form id="note-form" class="work-form"><input id="note-id" type="hidden"><label>Title<input id="note-title" maxlength="120" required placeholder="Investigation note"></label><div class="work-form-row"><label>Urgency<select id="note-urgency"><option value="critical">Critical</option><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></label><label>Linked to<select id="note-source"><option value="general">General</option><option value="network">Network Monitor</option><option value="operations">Operations</option></select></label></div><label>Reference<input id="note-reference" maxlength="180" placeholder="Optional device, incident or command reference"></label><label>Note<textarea id="note-body" class="notepad" maxlength="10000" rows="12" spellcheck="true" placeholder="Write your notes here…"></textarea></label><div class="work-actions"><button type="submit" class="network-primary-btn">Save note</button><button type="button" id="note-new">New</button><button type="button" id="note-delete" hidden>Delete</button></div></form></section></div>
       </section>
 
       <section id="tasks" class="page">
-        <div class="placeholder">
-          <div class="placeholder-logo">✓</div>
-          <h2>Tasks</h2>
-          <p>Task management is not enabled yet.</p>
-          <small>Nothing gets added until the data model is tested.</small>
-        </div>
+        <div class="work-header"><div><span class="eyebrow">CYBECK WORKSPACE</span><h2>Tasks</h2><p>Track follow-up work from Network Monitor and Operations.</p></div><div class="work-actions"><button type="button" data-work-export>Export JSON</button><button type="button" data-work-import>Import JSON</button></div></div>
+        <div class="work-layout"><section class="work-panel"><h3>Task board</h3><div class="work-form-row"><label>Filter<select id="task-filter"><option value="all">All tasks</option><option value="open">Open</option><option value="in-progress">In progress</option><option value="done">Done</option></select></label><label>Source<select id="task-source-filter"><option value="all">All sources</option><option value="network">Network Monitor</option><option value="operations">Operations</option><option value="general">General</option></select></label></div><div id="tasks-list" class="work-list"></div></section><section class="work-panel"><h3 id="task-form-heading">New task</h3><form id="task-form" class="work-form"><input id="task-id" type="hidden"><label>Title<input id="task-title" maxlength="120" required placeholder="Investigate network change"></label><div class="work-form-row"><label>Urgency<select id="task-urgency"><option value="critical">Critical</option><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></label><label>Status<select id="task-status"><option value="open">Open</option><option value="in-progress">In progress</option><option value="done">Done</option></select></label></div><div class="work-form-row"><label>Linked to<select id="task-source"><option value="general">General</option><option value="network">Network Monitor</option><option value="operations">Operations</option></select></label><label>Due date<input id="task-due" type="date"></label></div><label>Reference<input id="task-reference" maxlength="180" placeholder="Optional device, incident or command reference"></label><label>Details<textarea id="task-body" maxlength="10000" rows="8" placeholder="Steps and observations"></textarea></label><div class="work-actions"><button type="submit" class="network-primary-btn">Save task</button><button type="button" id="task-new">New</button><button type="button" id="task-delete" hidden>Delete</button></div></form></section></div>
       </section>
       <section id="network" class="page">
         <div class="network-monitor-dashboard">
+        <div class="work-shortcuts"><button type="button" data-create-work="task" data-work-source="network">New Network task</button><button type="button" data-create-work="note" data-work-source="network">New Network note</button></div>
 
 <!-- FLOATING QUICK ACTIONS -->
 
@@ -1031,7 +1025,7 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.10</span>
+  Version <span id="release-version">0.1.11</span>
 </h3>
 
 <ul class="release-notes">
@@ -1124,5 +1118,6 @@
   <script src="security-operations.js"></script>
   <script src="operations-console.js"></script>
   <script src="remote-systems-ui.js"></script>
+  <script src="work-items-ui.js"></script>
 </body>
 </html>
