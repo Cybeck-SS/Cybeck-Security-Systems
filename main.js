@@ -13,7 +13,7 @@ const { firewallTarget } = require("./security-actions");
 const { shellSpec, runCommand } = require("./operations-shell");
 const { createSessionAccess } = require("./operations-access");
 const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
-const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, sessionUri: anyDeskSessionUri } = require("./anydesk-integration");
+const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, validateAnyDeskAddress, findAnyDesk, verifyAnyDeskExecutable } = require("./anydesk-integration");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -341,10 +341,38 @@ ipcMain.handle("open-quick-assist", async (event) => {
 ipcMain.handle("open-anydesk-session", async (event, suppliedAddress) => {
     if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
     try {
-        const uri = anyDeskSessionUri(suppliedAddress);
-        await shell.openExternal(uri);
-        return { opened: true };
+        const address = validateAnyDeskAddress(suppliedAddress);
+        const file = findAnyDesk(selectedAnyDeskPath);
+        if (!file) return { opened: false, error: "AnyDesk executable not found. Select its .exe file or install AnyDesk from the official site." };
+        selectedAnyDeskPath = file;
+        await new Promise((resolve, reject) => {
+            const child = spawn(file, [address], { detached: true, stdio: "ignore", shell: false, windowsHide: false });
+            child.once("spawn", () => { child.unref(); resolve(); });
+            child.once("error", reject);
+        });
+        return { opened: true, path: file };
     } catch (error) { return { opened: false, error: `AnyDesk could not open: ${error.message}` }; }
+});
+
+let selectedAnyDeskPath = null;
+ipcMain.handle("get-anydesk-status", (event) => {
+    if (!isLocalOperationsWindow(event)) return { found: false };
+    const file = findAnyDesk(selectedAnyDeskPath);
+    if (file) selectedAnyDeskPath = file;
+    return { found: Boolean(file), path: file };
+});
+
+ipcMain.handle("choose-anydesk-executable", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { found: false, error: "Local Cybeck window required." };
+    const result = await dialog.showOpenDialog(mainWindow, {
+        title: "Select the signed AnyDesk executable",
+        properties: ["openFile"], filters: [{ name: "Windows applications", extensions: ["exe"] }]
+    });
+    if (result.canceled || !result.filePaths.length) return { found: false, canceled: true };
+    const file = result.filePaths[0];
+    if (!verifyAnyDeskExecutable(file)) return { found: false, error: "That file is not a valid AnyDesk executable signed by AnyDesk Software GmbH." };
+    selectedAnyDeskPath = file;
+    return { found: true, path: file };
 });
 
 ipcMain.handle("open-anydesk-download", async (event) => {

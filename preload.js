@@ -64,6 +64,8 @@ contextBridge.exposeInMainWorld(
         checkRemoteDesktop: (host) => ipcRenderer.invoke("check-remote-desktop", host),
         openQuickAssist: () => ipcRenderer.invoke("open-quick-assist"),
         openAnyDeskSession: (address) => ipcRenderer.invoke("open-anydesk-session", address),
+        getAnyDeskStatus: () => ipcRenderer.invoke("get-anydesk-status"),
+        chooseAnyDeskExecutable: () => ipcRenderer.invoke("choose-anydesk-executable"),
         openAnyDeskDownload: () => ipcRenderer.invoke("open-anydesk-download"),
         onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),
 

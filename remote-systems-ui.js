@@ -118,6 +118,11 @@
             : result.error;
     });
     const anyDeskStatus = get("ops-anydesk-status");
+    bridge.getAnyDeskStatus().then((result) => {
+        anyDeskStatus.textContent = result.found
+            ? `AnyDesk ready: ${result.path}`
+            : "AnyDesk not found. Choose its .exe file or get it from the official site.";
+    }).catch(() => { anyDeskStatus.textContent = "Unable to check AnyDesk installation."; });
     get("ops-anydesk-connect").addEventListener("click", async () => {
         anyDeskStatus.textContent = "Opening AnyDesk…";
         try {
@@ -132,6 +137,13 @@
             const result = await bridge.openAnyDeskDownload();
             anyDeskStatus.textContent = result.opened ? "Official AnyDesk download page opened." : result.error;
         } catch (error) { anyDeskStatus.textContent = `Download page could not open: ${error.message}`; }
+    });
+    get("ops-anydesk-choose").addEventListener("click", async () => {
+        try {
+            const result = await bridge.chooseAnyDeskExecutable();
+            if (result.found) anyDeskStatus.textContent = `AnyDesk ready: ${result.path}`;
+            else if (!result.canceled) anyDeskStatus.textContent = result.error;
+        } catch (error) { anyDeskStatus.textContent = `AnyDesk selection failed: ${error.message}`; }
     });
     host.addEventListener("input", refresh);
     platform.addEventListener("change", refresh);
