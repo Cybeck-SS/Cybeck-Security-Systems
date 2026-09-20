@@ -2744,6 +2744,14 @@ h3 { margin: 4px 0 0; font-size: 20px; }
 .ops-activity-row strong { color: var(--green-bright); }
 .ops-activity-row span { color: var(--text); }
 .ops-history { margin-top: 18px; }
+.ops-panel-toggle { cursor: pointer; list-style: none; margin-bottom: 0; align-items: center; }
+.ops-panel-toggle::-webkit-details-marker { display: none; }
+.ops-panel-toggle:focus-visible { outline: 2px solid var(--green-bright); outline-offset: 4px; border-radius: 6px; }
+.ops-panel-toggle strong { display: block; color: var(--text); text-transform: uppercase; font-size: 13px; letter-spacing: 1px; }
+.ops-panel-toggle small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+.ops-chevron { margin-left: auto; color: var(--green-bright); transition: transform .2s ease; }
+details[open] > .ops-panel-toggle { margin-bottom: 14px; }
+details[open] > .ops-panel-toggle .ops-chevron { transform: rotate(180deg); }
 .ops-history .ops-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ops-history small { color: var(--muted); }
 .ops-console { margin-top: 18px; }
@@ -2763,6 +2771,22 @@ h3 { margin: 4px 0 0; font-size: 20px; }
 .ops-console-actions button:disabled { opacity: .45; cursor: default; }
 .ops-console-actions span { color: var(--muted); font-size: 11px; }
 #ops-output { max-height: 330px; min-height: 120px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid rgba(183,210,73,.18); border-radius: 8px; padding: 13px; background: #080d09; color: var(--green-bright); font: 11px/1.5 Consolas, monospace; }
+.ops-remote { margin-top: 18px; }
+.ops-remote > p, .ops-remote > small { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.ops-remote-form { display: grid; grid-template-columns: 2fr 1.2fr .8fr 1fr; gap: 12px; margin: 17px 0; }
+.ops-remote-form label, .ops-remote-command-label { display: grid; gap: 8px; color: var(--green-bright); font-size: 10px; letter-spacing: 1px; }
+.ops-remote-form label input, .ops-remote-form label select, #ops-remote-command { width: 100%; border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: #0a100b; color: var(--text); padding: 10px; font: 12px Consolas, monospace; }
+.ops-remote-form .ops-remote-actions { grid-column: 1 / -1; }
+.ops-remote-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.ops-remote-actions button { border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: rgba(183,210,73,.06); color: var(--green-bright); padding: 9px 12px; cursor: pointer; }
+.ops-remote-actions button:disabled { opacity: .45; cursor: default; }
+.ops-remote-actions span { color: var(--muted); font-size: 11px; }
+.ops-remote-auto { color: var(--muted); font-size: 11px; display: inline-flex; align-items: center; gap: 6px; }
+.ops-remote-auto input { accent-color: var(--green-bright); }
+#ops-remote-command { min-height: 70px; resize: vertical; margin-top: 8px; }
+#ops-remote-output { max-height: 330px; min-height: 120px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid rgba(183,210,73,.18); border-radius: 8px; padding: 13px; background: #080d09; color: var(--green-bright); font: 11px/1.5 Consolas, monospace; }
+@media (max-width: 900px) { .ops-remote-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .ops-remote-form { grid-template-columns: 1fr; } }
 .connection-monitor-panel, .incidents-panel { margin-top: 20px; }
 .connection-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 16px 0; color: var(--muted); font-size: 11px; }
 .connection-toolbar button, .incident-controls button { border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: rgba(183,210,73,.06); color: var(--green-bright); padding: 8px 11px; cursor: pointer; }

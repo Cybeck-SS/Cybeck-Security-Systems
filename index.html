@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.6</span>
+        <span class="version">v0.1.7</span>
       </div>
     </aside>
 
@@ -245,11 +245,11 @@
     </article>
     <article class="network-panel"><div class="network-panel-heading"><span class="network-panel-icon">▤</span><div><h3>Recent Security Activity</h3><p>Current session and saved local events</p></div></div><div id="ops-recent-activity" class="ops-activity">No activity recorded yet.</div></article>
   </div>
-  <article class="network-panel ops-history"><div class="network-panel-heading"><span class="network-panel-icon">◷</span><div><h3>Monitoring History</h3><p>Totals saved locally on this device</p></div></div>
+  <details class="network-panel ops-history" id="ops-history-panel"><summary class="network-panel-heading ops-panel-toggle"><span class="network-panel-icon">◷</span><span><strong>Monitoring History</strong><small>Totals saved locally on this device</small></span><span class="ops-chevron">⌄</span></summary>
     <div class="ops-metrics"><div><span>TODAY</span><strong id="ops-today">--</strong></div><div><span>LAST 7 DAYS</span><strong id="ops-week">--</strong></div><div><span>LAST 30 DAYS</span><strong id="ops-month">--</strong></div></div><small id="ops-storage-status">Loading local history…</small>
-  </article>
-  <article class="network-panel ops-console">
-    <div class="network-panel-heading"><span class="network-panel-icon">⌘</span><div><h3>Local Command Console</h3><p>CMD and PowerShell while monitoring remains active</p></div></div>
+  </details>
+  <details class="network-panel ops-console" id="ops-console-panel">
+    <summary class="network-panel-heading ops-panel-toggle"><span class="network-panel-icon">⌘</span><span><strong>Local Command Console</strong><small>CMD and PowerShell while monitoring remains active</small></span><span class="ops-chevron">⌄</span></summary>
     <p>Allow local CMD and PowerShell access once for this app session. Commands then run with your Windows account permissions until Cybeck closes. Administrator actions still require Windows authorization.</p>
     <div class="ops-console-access">
       <button id="ops-enable-access" type="button">Allow Console Access</button>
@@ -270,7 +270,24 @@
     </form>
     <pre id="ops-output" role="log" aria-live="off" aria-label="Command output">Output appears here after you run a command.</pre>
     <small>Session access ends when Cybeck closes · one command at a time · 30 second limit · 128 KB output limit · output is not saved</small>
-  </article>
+  </details>
+  <details class="network-panel ops-remote" id="ops-remote-panel">
+    <summary class="network-panel-heading ops-panel-toggle"><span class="network-panel-icon">◈</span><span><strong>Remote Systems</strong><small>SSH usage and commands · Windows Remote Desktop</small></span><span class="ops-chevron">⌄</span></summary>
+    <p>Connect only to computers you own or administer. SSH usage and commands need a configured key and trusted host key on the second computer. Windows Remote Desktop can be opened separately using the computer address and handles its own sign-in. No password is stored or network service opened here.</p>
+    <form id="ops-remote-connect" class="ops-remote-form">
+      <label for="ops-remote-host">COMPUTER ADDRESS<input id="ops-remote-host" type="text" maxlength="253" placeholder="second-pc.local or 192.168.1.20" required></label>
+      <label for="ops-remote-user">SSH USER<input id="ops-remote-user" type="text" maxlength="64" placeholder="Your remote account" required></label>
+      <label for="ops-remote-port">SSH PORT<input id="ops-remote-port" type="number" min="1" max="65535" value="22" required></label>
+      <label for="ops-remote-os">REMOTE OS<select id="ops-remote-os"><option value="windows">Windows</option><option value="linux">Linux</option><option value="macos">macOS</option></select></label>
+      <div class="ops-remote-actions"><button type="submit" id="ops-remote-connect-btn">Connect with SSH</button><button type="button" id="ops-remote-disconnect" disabled>Disconnect</button><span id="ops-remote-status" role="status" aria-live="polite">Not connected</span></div>
+    </form>
+    <div class="ops-remote-actions"><button type="button" id="ops-remote-usage" disabled>View Resource Usage</button><label class="ops-remote-auto"><input type="checkbox" id="ops-remote-auto"> Auto refresh every 15s</label><button type="button" id="ops-remote-desktop" disabled>Open Remote Desktop</button></div>
+    <label class="ops-remote-command-label" for="ops-remote-command">REMOTE COMMAND</label>
+    <textarea id="ops-remote-command" maxlength="2000" rows="3" spellcheck="false" placeholder="Runs on the second computer with its account permissions"></textarea>
+    <div class="ops-remote-actions"><button type="button" id="ops-remote-run" disabled>Run Remote Command</button><button type="button" id="ops-remote-stop" disabled>Stop</button><button type="button" id="ops-remote-clear">Clear Output</button><span id="ops-remote-operation-status" role="status" aria-live="polite">Ready</span></div>
+    <pre id="ops-remote-output" role="log" aria-label="Remote system output">Resource usage and command output appear here.</pre>
+    <small>Connection lasts for this app window · SSH key and trusted host required · 30 second command limit · 128 KB output limit</small>
+  </details>
 </section>
 
       <section id="vault" class="page">
@@ -1008,13 +1025,13 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.6</span>
+  Version <span id="release-version">0.1.7</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Added one-time CMD and PowerShell access for each app session.</li>
-  <li>Added a Revoke Access control and kept live output and Stop.</li>
-  <li>Retained active network and security monitoring while commands run.</li>
+  <li>Made Operations history and consoles collapsible.</li>
+  <li>Added SSH resource checks and remote commands for a second computer.</li>
+  <li>Added a Windows Remote Desktop launch option.</li>
 </ul>
 
         <ul class="release-notes">
@@ -1100,5 +1117,6 @@
   <script src="renderer.js"></script>
   <script src="security-operations.js"></script>
   <script src="operations-console.js"></script>
+  <script src="remote-systems-ui.js"></script>
 </body>
 </html>

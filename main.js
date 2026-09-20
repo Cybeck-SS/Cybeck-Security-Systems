@@ -5,13 +5,14 @@ const os = require("os");
 const dns = require("dns").promises;
 const fs = require("fs/promises");
 const { promisify } = require("util");
-const { exec, execFile } = require("child_process");
+const { exec, execFile, spawn } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 const { normalizeConnections, findConnectionObservations, parseNetstatAttempts } = require("./security-core");
 const { renderIncidentReport } = require("./incident-report");
 const { firewallTarget } = require("./security-actions");
 const { shellSpec, runCommand } = require("./operations-shell");
 const { createSessionAccess } = require("./operations-access");
+const { validateHost, validateTarget, resourceCommand, runRemote } = require("./remote-systems");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -184,6 +185,10 @@ ipcMain.handle("get-incident-block-status", async (_event, incidentId, remoteAdd
 let mainWindow;
 let activeOperationsCommand = null;
 const operationsAccess = createSessionAccess();
+let remoteTarget = null;
+let activeRemoteCommand = null;
+let remoteConnecting = false;
+let remoteGeneration = 0;
 
 function isLocalOperationsWindow(event) {
     return process.platform === "win32" && mainWindow &&
@@ -240,6 +245,82 @@ ipcMain.handle("run-operations-command", async (event, shell, command) => {
 ipcMain.handle("stop-operations-command", (event) => {
     if (!mainWindow || event.sender !== mainWindow.webContents) return false;
     return activeOperationsCommand?.stop() || false;
+});
+
+ipcMain.handle("get-remote-system", (event) =>
+    isLocalOperationsWindow(event) ? remoteTarget : null);
+
+ipcMain.handle("connect-remote-system", async (event, supplied) => {
+    if (!isLocalOperationsWindow(event)) return { connected: false, error: "Local Cybeck window required." };
+    if (remoteConnecting || activeRemoteCommand) return { connected: false, error: "Wait for the current remote operation." };
+    let target;
+    try { target = validateTarget(supplied); }
+    catch (error) { return { connected: false, error: error.message }; }
+    if (remoteTarget && JSON.stringify(remoteTarget) === JSON.stringify(target)) return { connected: true, target };
+    remoteConnecting = true;
+    const generation = remoteGeneration;
+    const window = mainWindow;
+    try {
+        const approval = await dialog.showMessageBox(window, {
+            type: "warning", buttons: ["Cancel", "Connect with SSH"], defaultId: 0, cancelId: 0,
+            title: "Connect to remote computer",
+            message: `Connect to ${target.username}@${target.host}:${target.port}?`,
+            detail: "Cybeck can view resource usage and run commands on this computer using your existing SSH key and the remote account's permissions. Access lasts only for this Cybeck window session. The remote computer must already allow SSH and trust your key."
+        });
+        if (approval.response !== 1) return { connected: false, canceled: true };
+        let output = "";
+        const result = await new Promise((resolve) => runRemote(target, "echo CYBECK_REMOTE_READY",
+            (_stream, chunk) => { output += chunk; }, resolve));
+        if (result.exitCode !== 0 || !output.includes("CYBECK_REMOTE_READY")) {
+            return { connected: false, error: `SSH connection failed: ${output.trim() || result.message}. Configure SSH keys and verify the host key on this computer first.` };
+        }
+        if (remoteGeneration !== generation || mainWindow !== window || window.isDestroyed()) {
+            return { connected: false, error: "Cybeck window closed during connection." };
+        }
+        remoteTarget = target;
+        return { connected: true, target };
+    } catch (error) { return { connected: false, error: error.message }; }
+    finally { remoteConnecting = false; }
+});
+
+ipcMain.handle("disconnect-remote-system", (event) => {
+    if (!isLocalOperationsWindow(event)) return false;
+    remoteGeneration += 1;
+    remoteTarget = null;
+    activeRemoteCommand?.stop();
+    return true;
+});
+
+function startRemoteOperation(event, command) {
+    if (!isLocalOperationsWindow(event)) return { started: false, error: "Local Cybeck window required." };
+    if (!remoteTarget) return { started: false, error: "Connect to a remote computer first." };
+    if (activeRemoteCommand || remoteConnecting) return { started: false, error: "A remote operation is already running." };
+    const sender = event.sender;
+    const emit = (data) => { if (!sender.isDestroyed()) sender.send("remote-command-event", data); };
+    try {
+        const operation = runRemote(remoteTarget, command,
+            (stream, output) => emit({ type: "output", stream, output }),
+            (result) => { activeRemoteCommand = null; emit({ type: "done", ...result }); });
+        activeRemoteCommand = operation;
+        return { started: true };
+    } catch (error) { return { started: false, error: error.message }; }
+}
+
+ipcMain.handle("run-remote-command", (event, command) => startRemoteOperation(event, command));
+ipcMain.handle("get-remote-usage", (event) => startRemoteOperation(event, remoteTarget ? resourceCommand(remoteTarget.platform) : ""));
+ipcMain.handle("stop-remote-command", (event) =>
+    isLocalOperationsWindow(event) ? activeRemoteCommand?.stop() || false : false);
+
+ipcMain.handle("open-remote-desktop", (event, suppliedHost) => {
+    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    try {
+        const host = validateHost(suppliedHost);
+        const child = spawn(path.join(process.env.SystemRoot || "C:\\Windows", "System32", "mstsc.exe"),
+            [`/v:${host}`], { detached: true, stdio: "ignore", windowsHide: false });
+        child.once("error", (error) => console.error("[REMOTE] Remote Desktop failed:", error));
+        child.unref();
+        return { opened: true };
+    } catch (error) { return { opened: false, error: error.message }; }
 });
 
 // ======================================================
@@ -300,6 +381,9 @@ function createWindow() {
     mainWindow.on("closed", () => {
         operationsAccess.revoke();
         activeOperationsCommand?.stop();
+        remoteGeneration += 1;
+        remoteTarget = null;
+        activeRemoteCommand?.stop();
         mainWindow = null;
     });
 }

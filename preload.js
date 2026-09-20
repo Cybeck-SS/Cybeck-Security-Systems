@@ -54,6 +54,14 @@ contextBridge.exposeInMainWorld(
         runOperationsCommand: (shell, command) => ipcRenderer.invoke("run-operations-command", shell, command),
         stopOperationsCommand: () => ipcRenderer.invoke("stop-operations-command"),
         onOperationsCommandEvent: (callback) => ipcRenderer.on("operations-command-event", (_event, data) => callback(data)),
+        getRemoteSystem: () => ipcRenderer.invoke("get-remote-system"),
+        connectRemoteSystem: (target) => ipcRenderer.invoke("connect-remote-system", target),
+        disconnectRemoteSystem: () => ipcRenderer.invoke("disconnect-remote-system"),
+        getRemoteUsage: () => ipcRenderer.invoke("get-remote-usage"),
+        runRemoteCommand: (command) => ipcRenderer.invoke("run-remote-command", command),
+        stopRemoteCommand: () => ipcRenderer.invoke("stop-remote-command"),
+        openRemoteDesktop: (host) => ipcRenderer.invoke("open-remote-desktop", host),
+        onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),
 
         getAppInfo: () => {
             return ipcRenderer.invoke(
