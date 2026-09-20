@@ -2748,6 +2748,10 @@ h3 { margin: 4px 0 0; font-size: 20px; }
 .ops-history small { color: var(--muted); }
 .ops-console { margin-top: 18px; }
 .ops-console > p, .ops-console > small { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.ops-console-access { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.ops-console-access button { border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: rgba(183,210,73,.06); color: var(--green-bright); padding: 9px 12px; cursor: pointer; }
+.ops-console-access button:disabled { opacity: .45; cursor: default; }
+.ops-console-access span { color: var(--muted); font-size: 11px; }
 .ops-console form { display: grid; gap: 9px; margin: 18px 0 12px; }
 .ops-console label { color: var(--green-bright); font-size: 10px; letter-spacing: 1px; }
 .ops-console select, .ops-console textarea { border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: #0a100b; color: var(--text); padding: 10px; font: 12px Consolas, monospace; }

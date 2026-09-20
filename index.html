@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.5</span>
+        <span class="version">v0.1.6</span>
       </div>
     </aside>
 
@@ -250,21 +250,26 @@
   </article>
   <article class="network-panel ops-console">
     <div class="network-panel-heading"><span class="network-panel-icon">⌘</span><div><h3>Local Command Console</h3><p>CMD and PowerShell while monitoring remains active</p></div></div>
-    <p>Commands run on this computer with your Windows account permissions. Review each command before approving it. No administrator elevation is requested.</p>
+    <p>Allow local CMD and PowerShell access once for this app session. Commands then run with your Windows account permissions until Cybeck closes. Administrator actions still require Windows authorization.</p>
+    <div class="ops-console-access">
+      <button id="ops-enable-access" type="button">Allow Console Access</button>
+      <button id="ops-revoke-access" type="button" disabled>Revoke Access</button>
+      <span id="ops-access-status" role="status" aria-live="polite">Console access off</span>
+    </div>
     <form id="ops-command-form">
       <label for="ops-shell">SHELL</label>
       <select id="ops-shell"><option value="cmd">CMD</option><option value="powershell">PowerShell</option></select>
       <label for="ops-command">COMMAND</label>
       <textarea id="ops-command" maxlength="2000" rows="3" spellcheck="false" placeholder="Enter a local command (Ctrl+Enter to run)"></textarea>
       <div class="ops-console-actions">
-        <button class="network-primary-btn" id="ops-run" type="submit">Run Command</button>
+        <button class="network-primary-btn" id="ops-run" type="submit" disabled>Run Command</button>
         <button id="ops-stop" type="button" disabled>Stop</button>
         <button id="ops-clear" type="button">Clear Output</button>
         <span id="ops-command-status" role="status" aria-live="polite">Ready</span>
       </div>
     </form>
     <pre id="ops-output" role="log" aria-live="off" aria-label="Command output">Output appears here after you run a command.</pre>
-    <small>One command at a time · 30 second limit · 128 KB output limit · output is not saved</small>
+    <small>Session access ends when Cybeck closes · one command at a time · 30 second limit · 128 KB output limit · output is not saved</small>
   </article>
 </section>
 
@@ -1003,12 +1008,12 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.5</span>
+  Version <span id="release-version">0.1.6</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Added local CMD and PowerShell consoles to Operations.</li>
-  <li>Added command approval, live output, Stop control, and resource limits.</li>
+  <li>Added one-time CMD and PowerShell access for each app session.</li>
+  <li>Added a Revoke Access control and kept live output and Stop.</li>
   <li>Retained active network and security monitoring while commands run.</li>
 </ul>
 

@@ -1,4 +1,4 @@
-# Cybeck Security Systems v0.1.5
+# Cybeck Security Systems v0.1.6
 
 Local Windows desktop security monitor built with Electron. Run `npm start` from this folder. Run `npm test` for focused checks. `npm run build` creates a Windows installer in `release/`; building does not publish it.
 
@@ -11,7 +11,7 @@ Local Windows desktop security monitor built with Electron. Run `npm start` from
 - Incident records with investigation, containment review, resolution, false-positive and archive status, notes, timeline, and PDF or JSON report export. A user can explicitly block one incident's remote IP with a Windows Firewall outbound rule and remove that exact Cybeck rule later. Both actions require in-app confirmation and may need Windows administrator access. Detection never blocks traffic automatically.
 - Local event, incident, and daily summary history in Electron's user-data folder as `security-history.json`, encrypted with Windows' user-bound storage protection. History is bounded to the latest 500 events, 200 incidents, and 31 daily summaries. If encryption is unavailable, Cybeck does not save history.
 - Operations dashboard with live status, open incidents, recent activity, monitoring module status, and today/7-day/30-day totals.
-- Operations local command console for CMD and Windows PowerShell. Every command requires an in-app approval, runs with the current Windows user's permissions, streams output in the app, and can be stopped. One command runs at a time with a 30-second and 128 KB output limit. The console does not elevate privileges, persist output, or expose a remote service.
+- Operations local command console for CMD and Windows PowerShell. One in-app approval enables both shells for the current Cybeck window session; closing the window clears access. Access can also be revoked in Operations. Commands run with the current Windows user's permissions, stream output in the app, and can be stopped. One command runs at a time with a 30-second and 128 KB output limit. The console does not elevate privileges, persist output, or expose a remote service.
 
 ## Limits
 
@@ -23,6 +23,6 @@ The updater remains configured separately from these monitoring features.
 
 Electron 38 requires Windows 10 or later. The current installer targets 64-bit Intel/AMD Windows; other architectures need separately built and tested installers.
 
-The v0.1.5 GitHub installer is unsigned. Windows may show a SmartScreen or Smart App Control warning, and managed device policy may block it. Do not disable Windows security features or add blanket antivirus exclusions. A trusted publisher signature requires a valid code-signing certificate or signing service; a self-signed certificate does not establish public trust.
+The v0.1.6 GitHub installer is unsigned. Windows may show a SmartScreen or Smart App Control warning, and managed device policy may block it. Do not disable Windows security features or add blanket antivirus exclusions. A trusted publisher signature requires a valid code-signing certificate or signing service; a self-signed certificate does not establish public trust.
 
 For future public releases, supply electron-builder with a trusted code-signing identity (for example `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`) and run `npm run publish`. The publish command requires a valid signature and fails before uploading if signing is unavailable. Verify the resulting installer and app executable with `Get-AuthenticodeSignature` and test on the Windows versions and architectures you intend to support. Even signed new releases may need time to build SmartScreen reputation.

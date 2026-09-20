@@ -11,6 +11,7 @@ const { normalizeConnections, findConnectionObservations, parseNetstatAttempts }
 const { renderIncidentReport } = require("./incident-report");
 const { firewallTarget } = require("./security-actions");
 const { shellSpec, runCommand } = require("./operations-shell");
+const { createSessionAccess } = require("./operations-access");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -182,23 +183,46 @@ ipcMain.handle("get-incident-block-status", async (_event, incidentId, remoteAdd
 
 let mainWindow;
 let activeOperationsCommand = null;
+const operationsAccess = createSessionAccess();
+
+function isLocalOperationsWindow(event) {
+    return process.platform === "win32" && mainWindow &&
+        event.sender === mainWindow.webContents &&
+        event.sender.getURL() === pathToFileURL(path.join(__dirname, "index.html")).href;
+}
+
+ipcMain.handle("get-operations-access", (event) =>
+    Boolean(isLocalOperationsWindow(event) && operationsAccess.isGranted()));
+
+ipcMain.handle("request-operations-access", async (event) => {
+    if (!isLocalOperationsWindow(event)) return false;
+    const window = mainWindow;
+    return operationsAccess.request(async () => {
+        const approval = await dialog.showMessageBox(window, {
+            type: "warning", buttons: ["Cancel", "Allow for This Session"], defaultId: 0, cancelId: 0,
+            title: "Enable local command console",
+            message: "Allow CMD and PowerShell commands until Cybeck closes?",
+            detail: "Commands you enter can read or change files, run programs, and change settings using your Windows account permissions. Cybeck will not ask again during this app session. Administrator actions still require Windows authorization. Access ends when this window closes."
+        });
+        return approval.response === 1 && mainWindow === window && !window.isDestroyed();
+    });
+});
+
+ipcMain.handle("revoke-operations-access", (event) => {
+    if (!isLocalOperationsWindow(event)) return false;
+    operationsAccess.revoke();
+    activeOperationsCommand?.stop();
+    return true;
+});
 
 ipcMain.handle("run-operations-command", async (event, shell, command) => {
-    if (process.platform !== "win32" || !mainWindow || event.sender !== mainWindow.webContents ||
-        event.sender.getURL() !== pathToFileURL(path.join(__dirname, "index.html")).href) {
+    if (!isLocalOperationsWindow(event)) {
         return { started: false, error: "Local Cybeck window required." };
     }
+    if (!operationsAccess.isGranted()) return { started: false, error: "Enable console access for this session first." };
     if (activeOperationsCommand) return { started: false, error: "A command is already running." };
     try { shellSpec(shell, command); }
     catch (error) { return { started: false, error: error.message }; }
-    const approval = await dialog.showMessageBox(mainWindow, {
-        type: "warning", buttons: ["Cancel", "Run Command"], defaultId: 0, cancelId: 0,
-        title: "Run local command",
-        message: `Run this ${shell === "cmd" ? "CMD" : "PowerShell"} command as your Windows account?`,
-        detail: command
-    });
-    if (approval.response !== 1) return { started: false, canceled: true };
-    if (activeOperationsCommand) return { started: false, error: "A command is already running." };
     const sender = event.sender;
     const emit = (data) => { if (!sender.isDestroyed()) sender.send("operations-command-event", data); };
     try {
@@ -274,6 +298,7 @@ function createWindow() {
     mainWindow.setMenuBarVisibility(false);
 
     mainWindow.on("closed", () => {
+        operationsAccess.revoke();
         activeOperationsCommand?.stop();
         mainWindow = null;
     });
