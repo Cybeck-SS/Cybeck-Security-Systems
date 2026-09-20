@@ -2783,6 +2783,9 @@ details[open] > .ops-panel-toggle .ops-chevron { transform: rotate(180deg); }
 .ops-remote-actions span { color: var(--muted); font-size: 11px; }
 .ops-remote-auto { color: var(--muted); font-size: 11px; display: inline-flex; align-items: center; gap: 6px; }
 .ops-remote-auto input { accent-color: var(--green-bright); }
+.ops-anydesk { margin: 16px 0; padding: 14px; border: 1px solid rgba(183,210,73,.18); border-radius: 10px; background: rgba(183,210,73,.035); }
+.ops-anydesk label { display: grid; gap: 8px; color: var(--green-bright); font-size: 10px; letter-spacing: 1px; }
+.ops-anydesk input { width: 100%; max-width: 420px; border: 1px solid rgba(183,210,73,.25); border-radius: 8px; background: #0a100b; color: var(--text); padding: 10px; font: 12px Consolas, monospace; }
 #ops-remote-command { min-height: 70px; resize: vertical; margin-top: 8px; }
 #ops-remote-output { max-height: 330px; min-height: 120px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid rgba(183,210,73,.18); border-radius: 8px; padding: 13px; background: #080d09; color: var(--green-bright); font: 11px/1.5 Consolas, monospace; }
 @media (max-width: 900px) { .ops-remote-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

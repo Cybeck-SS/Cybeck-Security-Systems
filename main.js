@@ -13,6 +13,7 @@ const { firewallTarget } = require("./security-actions");
 const { shellSpec, runCommand } = require("./operations-shell");
 const { createSessionAccess } = require("./operations-access");
 const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
+const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, sessionUri: anyDeskSessionUri } = require("./anydesk-integration");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -335,6 +336,23 @@ ipcMain.handle("open-quick-assist", async (event) => {
         await shell.openExternal("ms-quick-assist:");
         return { opened: true };
     } catch (error) { return { opened: false, error: `Quick Assist could not open: ${error.message}` }; }
+});
+
+ipcMain.handle("open-anydesk-session", async (event, suppliedAddress) => {
+    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    try {
+        const uri = anyDeskSessionUri(suppliedAddress);
+        await shell.openExternal(uri);
+        return { opened: true };
+    } catch (error) { return { opened: false, error: `AnyDesk could not open: ${error.message}` }; }
+});
+
+ipcMain.handle("open-anydesk-download", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    try {
+        await shell.openExternal(ANYDESK_DOWNLOAD_URL);
+        return { opened: true };
+    } catch (error) { return { opened: false, error: `AnyDesk download page could not open: ${error.message}` }; }
 });
 
 // ======================================================

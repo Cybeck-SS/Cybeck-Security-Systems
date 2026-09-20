@@ -117,6 +117,22 @@
             ? "Quick Assist opened. Select Help someone, then have the second PC enter the code and approve sharing."
             : result.error;
     });
+    const anyDeskStatus = get("ops-anydesk-status");
+    get("ops-anydesk-connect").addEventListener("click", async () => {
+        anyDeskStatus.textContent = "Opening AnyDesk…";
+        try {
+            const result = await bridge.openAnyDeskSession(get("ops-anydesk-address").value);
+            anyDeskStatus.textContent = result.opened
+                ? "AnyDesk connection request opened. Approve it on the second computer."
+                : result.error;
+        } catch (error) { anyDeskStatus.textContent = `AnyDesk could not open: ${error.message}`; }
+    });
+    get("ops-anydesk-download").addEventListener("click", async () => {
+        try {
+            const result = await bridge.openAnyDeskDownload();
+            anyDeskStatus.textContent = result.opened ? "Official AnyDesk download page opened." : result.error;
+        } catch (error) { anyDeskStatus.textContent = `Download page could not open: ${error.message}`; }
+    });
     host.addEventListener("input", refresh);
     platform.addEventListener("change", refresh);
     get("ops-remote-clear").addEventListener("click", () => { output.textContent = ""; });

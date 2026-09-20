@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.8</span>
+        <span class="version">v0.1.9</span>
       </div>
     </aside>
 
@@ -283,6 +283,11 @@
     </form>
     <div class="ops-remote-actions"><button type="button" id="ops-remote-usage" disabled>View Resource Usage</button><label class="ops-remote-auto"><input type="checkbox" id="ops-remote-auto"> Auto refresh every 15s</label><button type="button" id="ops-remote-check-rdp" disabled>Check RDP</button><button type="button" id="ops-remote-desktop" disabled>Open Remote Desktop</button><button type="button" id="ops-remote-quick-assist">Open Quick Assist</button></div>
     <small>Windows Home cannot receive Remote Desktop connections. For a Home PC, open Quick Assist on both computers; the second PC enters your code and approves screen sharing and control. RDP requires a supported Windows host with Remote Desktop enabled. SSH access is separate from screen sharing.</small>
+    <div class="ops-anydesk">
+      <label for="ops-anydesk-address">ANYDESK ID OR ALIAS<input id="ops-anydesk-address" type="text" maxlength="51" autocomplete="off" spellcheck="false" placeholder="123 456 789 or secondpc@ad"></label>
+      <div class="ops-remote-actions"><button type="button" id="ops-anydesk-connect">Connect with AnyDesk</button><button type="button" id="ops-anydesk-download">Get AnyDesk</button><span id="ops-anydesk-status" role="status" aria-live="polite">AnyDesk opens in its own window and handles remote approval.</span></div>
+      <small>Install AnyDesk on both computers. Cybeck starts the connection request; AnyDesk handles screen sharing, sign-in, permissions, and updates. Cybeck does not store an AnyDesk password.</small>
+    </div>
     <label class="ops-remote-command-label" for="ops-remote-command">REMOTE COMMAND</label>
     <textarea id="ops-remote-command" maxlength="2000" rows="3" spellcheck="false" placeholder="Runs on the second computer with its account permissions"></textarea>
     <div class="ops-remote-actions"><button type="button" id="ops-remote-run" disabled>Run Remote Command</button><button type="button" id="ops-remote-stop" disabled>Stop</button><button type="button" id="ops-remote-clear">Clear Output</button><span id="ops-remote-operation-status" role="status" aria-live="polite">Ready</span></div>
@@ -1026,13 +1031,13 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.8</span>
+  Version <span id="release-version">0.1.9</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Added an RDP connection check for the second computer.</li>
-  <li>Added Quick Assist access for attended Windows Home screen sharing.</li>
-  <li>Documented the planned Cybeck Connect feature.</li>
+  <li>Added an AnyDesk ID and alias launcher in Remote Systems.</li>
+  <li>Added a link to AnyDesk's official Windows download page.</li>
+  <li>Kept remote approval and screen control in the AnyDesk client.</li>
 </ul>
 
         <ul class="release-notes">
