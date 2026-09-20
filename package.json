@@ -8,6 +8,8 @@
     "start": "electron .",
     "test": "node --test",
     "build": "electron-builder --win",
+    "build:release": "electron-builder --win --publish never --config.forceCodeSigning=true",
+    "verify:release": "node scripts/verify-release-signatures.js",
     "publish": "electron-builder --win --publish always --config.forceCodeSigning=true"
   },
   "devDependencies": {
@@ -24,6 +26,7 @@
       "**/*",
       "!back-up/**",
       "!tests/**",
+      "!scripts/**",
       "!tmp/**",
       "!낈팱ǆ/**",
       "!RELEASE_NOTES_*.md"
