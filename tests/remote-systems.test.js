@@ -1,6 +1,18 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateHost, validateTarget, sshSpec, resourceCommand } = require("../remote-systems");
+const net = require("node:net");
+const { validateHost, validateTarget, checkRemoteDesktop, sshSpec, resourceCommand } = require("../remote-systems");
+
+test("RDP preflight reports TCP reachability without claiming a successful desktop login", async () => {
+    const server = net.createServer();
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+        const result = await checkRemoteDesktop("127.0.0.1", 1000, server.address().port);
+        assert.equal(result.reachable, true);
+        assert.match(result.detail, /sign-in and host permissions still need to succeed/);
+        assert.throws(() => checkRemoteDesktop("bad;host"), /valid DNS name/);
+    } finally { server.close(); }
+});
 
 test("remote target validation prevents option and shell injection", () => {
     const target = validateTarget({ host: "second-pc.local", username: "keithan", port: 22, platform: "windows" });

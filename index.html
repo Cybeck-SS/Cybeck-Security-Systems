@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.7</span>
+        <span class="version">v0.1.8</span>
       </div>
     </aside>
 
@@ -281,7 +281,8 @@
       <label for="ops-remote-os">REMOTE OS<select id="ops-remote-os"><option value="windows">Windows</option><option value="linux">Linux</option><option value="macos">macOS</option></select></label>
       <div class="ops-remote-actions"><button type="submit" id="ops-remote-connect-btn">Connect with SSH</button><button type="button" id="ops-remote-disconnect" disabled>Disconnect</button><span id="ops-remote-status" role="status" aria-live="polite">Not connected</span></div>
     </form>
-    <div class="ops-remote-actions"><button type="button" id="ops-remote-usage" disabled>View Resource Usage</button><label class="ops-remote-auto"><input type="checkbox" id="ops-remote-auto"> Auto refresh every 15s</label><button type="button" id="ops-remote-desktop" disabled>Open Remote Desktop</button></div>
+    <div class="ops-remote-actions"><button type="button" id="ops-remote-usage" disabled>View Resource Usage</button><label class="ops-remote-auto"><input type="checkbox" id="ops-remote-auto"> Auto refresh every 15s</label><button type="button" id="ops-remote-check-rdp" disabled>Check RDP</button><button type="button" id="ops-remote-desktop" disabled>Open Remote Desktop</button><button type="button" id="ops-remote-quick-assist">Open Quick Assist</button></div>
+    <small>Windows Home cannot receive Remote Desktop connections. For a Home PC, open Quick Assist on both computers; the second PC enters your code and approves screen sharing and control. RDP requires a supported Windows host with Remote Desktop enabled. SSH access is separate from screen sharing.</small>
     <label class="ops-remote-command-label" for="ops-remote-command">REMOTE COMMAND</label>
     <textarea id="ops-remote-command" maxlength="2000" rows="3" spellcheck="false" placeholder="Runs on the second computer with its account permissions"></textarea>
     <div class="ops-remote-actions"><button type="button" id="ops-remote-run" disabled>Run Remote Command</button><button type="button" id="ops-remote-stop" disabled>Stop</button><button type="button" id="ops-remote-clear">Clear Output</button><span id="ops-remote-operation-status" role="status" aria-live="polite">Ready</span></div>
@@ -1025,13 +1026,13 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.7</span>
+  Version <span id="release-version">0.1.8</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Made Operations history and consoles collapsible.</li>
-  <li>Added SSH resource checks and remote commands for a second computer.</li>
-  <li>Added a Windows Remote Desktop launch option.</li>
+  <li>Added an RDP connection check for the second computer.</li>
+  <li>Added Quick Assist access for attended Windows Home screen sharing.</li>
+  <li>Documented the planned Cybeck Connect feature.</li>
 </ul>
 
         <ul class="release-notes">

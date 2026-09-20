@@ -31,6 +31,7 @@
         get("ops-remote-run").disabled = !target || busy || connecting;
         get("ops-remote-stop").disabled = !busy;
         get("ops-remote-desktop").disabled = platform.value !== "windows" || !host.value.trim();
+        get("ops-remote-check-rdp").disabled = platform.value !== "windows" || !host.value.trim();
         status.textContent = connecting ? "Connecting…" : target ? `Connected: ${target.username}@${target.host}` : "Not connected";
     }
     function append(value) {
@@ -103,7 +104,18 @@
     });
     get("ops-remote-desktop").addEventListener("click", async () => {
         const result = await bridge.openRemoteDesktop(host.value.trim());
-        operationStatus.textContent = result.opened ? "Remote Desktop opened; sign in through Windows" : result.error;
+        operationStatus.textContent = result.opened ? "Windows Remote Desktop opened. The second PC must support RDP hosting; Windows Home does not. Use Quick Assist for Home." : result.error;
+    });
+    get("ops-remote-check-rdp").addEventListener("click", async () => {
+        operationStatus.textContent = "Checking RDP port 3389…";
+        const result = await bridge.checkRemoteDesktop(host.value.trim());
+        operationStatus.textContent = result.detail;
+    });
+    get("ops-remote-quick-assist").addEventListener("click", async () => {
+        const result = await bridge.openQuickAssist();
+        operationStatus.textContent = result.opened
+            ? "Quick Assist opened. Select Help someone, then have the second PC enter the code and approve sharing."
+            : result.error;
     });
     host.addEventListener("input", refresh);
     platform.addEventListener("change", refresh);

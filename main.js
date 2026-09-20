@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, dialog, safeStorage } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, dialog, safeStorage, shell } = require("electron");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const os = require("os");
@@ -12,7 +12,7 @@ const { renderIncidentReport } = require("./incident-report");
 const { firewallTarget } = require("./security-actions");
 const { shellSpec, runCommand } = require("./operations-shell");
 const { createSessionAccess } = require("./operations-access");
-const { validateHost, validateTarget, resourceCommand, runRemote } = require("./remote-systems");
+const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -321,6 +321,20 @@ ipcMain.handle("open-remote-desktop", (event, suppliedHost) => {
         child.unref();
         return { opened: true };
     } catch (error) { return { opened: false, error: error.message }; }
+});
+
+ipcMain.handle("check-remote-desktop", async (event, suppliedHost) => {
+    if (!isLocalOperationsWindow(event)) return { reachable: false, detail: "Local Cybeck window required." };
+    try { return await checkRemoteDesktop(suppliedHost); }
+    catch (error) { return { reachable: false, detail: error.message }; }
+});
+
+ipcMain.handle("open-quick-assist", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    try {
+        await shell.openExternal("ms-quick-assist:");
+        return { opened: true };
+    } catch (error) { return { opened: false, error: `Quick Assist could not open: ${error.message}` }; }
 });
 
 // ======================================================

@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const path = require("path");
+const net = require("net");
 
 const MAX_OUTPUT_BYTES = 128 * 1024;
 const MAX_RUNTIME_MS = 30000;
@@ -23,6 +24,26 @@ function validateTarget(supplied) {
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Enter an SSH port from 1 to 65535.");
     if (!["windows", "linux", "macos"].includes(platform)) throw new Error("Choose the remote OS.");
     return { host, username, port, platform };
+}
+
+function checkRemoteDesktop(suppliedHost, timeoutMs = 4000, port = 3389) {
+    const host = validateHost(suppliedHost);
+    return new Promise((resolve) => {
+        const socket = net.createConnection({ host, port });
+        let settled = false;
+        const finish = (reachable, detail) => {
+            if (settled) return;
+            settled = true;
+            socket.destroy();
+            resolve({ reachable, host, detail });
+        };
+        socket.setTimeout(timeoutMs);
+        socket.once("connect", () => finish(true, "RDP port 3389 is reachable. Windows sign-in and host permissions still need to succeed."));
+        socket.once("timeout", () => finish(false, "No response from RDP port 3389. Check the second PC's address, Remote Desktop setting, firewall, and network."));
+        socket.once("error", (error) => finish(false, error.code === "ECONNREFUSED"
+            ? "RDP port 3389 refused the connection. Check that the second PC supports and has enabled Remote Desktop."
+            : `RDP port 3389 could not be reached (${error.code || "network error"}). Check the second PC's address, Remote Desktop setting, firewall, and network.`));
+    });
 }
 
 function sshSpec(target, command, systemRoot = process.env.SystemRoot || "C:\\Windows") {
@@ -80,4 +101,4 @@ function runRemote(target, command, onOutput, onDone) {
     return { stop: () => { if (finished) return false; reason = "Stopped by user."; child.kill(); return true; } };
 }
 
-module.exports = { validateHost, validateTarget, sshSpec, resourceCommand, runRemote };
+module.exports = { validateHost, validateTarget, checkRemoteDesktop, sshSpec, resourceCommand, runRemote };

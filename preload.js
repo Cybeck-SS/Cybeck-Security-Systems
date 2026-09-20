@@ -61,6 +61,8 @@ contextBridge.exposeInMainWorld(
         runRemoteCommand: (command) => ipcRenderer.invoke("run-remote-command", command),
         stopRemoteCommand: () => ipcRenderer.invoke("stop-remote-command"),
         openRemoteDesktop: (host) => ipcRenderer.invoke("open-remote-desktop", host),
+        checkRemoteDesktop: (host) => ipcRenderer.invoke("check-remote-desktop", host),
+        openQuickAssist: () => ipcRenderer.invoke("open-quick-assist"),
         onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),
 
         getAppInfo: () => {
