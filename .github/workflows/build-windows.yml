@@ -1,0 +1,28 @@
+name: Build Windows installer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cybeck-windows-${{ github.sha }}
+          path: |
+            release/Cybeck Security Systems Setup *.exe
+            release/Cybeck Security Systems Setup *.exe.blockmap
+            release/latest.yml
+          if-no-files-found: error
