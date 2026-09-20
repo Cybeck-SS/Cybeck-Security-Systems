@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.4</span>
+        <span class="version">v0.1.5</span>
       </div>
     </aside>
 
@@ -247,6 +247,24 @@
   </div>
   <article class="network-panel ops-history"><div class="network-panel-heading"><span class="network-panel-icon">◷</span><div><h3>Monitoring History</h3><p>Totals saved locally on this device</p></div></div>
     <div class="ops-metrics"><div><span>TODAY</span><strong id="ops-today">--</strong></div><div><span>LAST 7 DAYS</span><strong id="ops-week">--</strong></div><div><span>LAST 30 DAYS</span><strong id="ops-month">--</strong></div></div><small id="ops-storage-status">Loading local history…</small>
+  </article>
+  <article class="network-panel ops-console">
+    <div class="network-panel-heading"><span class="network-panel-icon">⌘</span><div><h3>Local Command Console</h3><p>CMD and PowerShell while monitoring remains active</p></div></div>
+    <p>Commands run on this computer with your Windows account permissions. Review each command before approving it. No administrator elevation is requested.</p>
+    <form id="ops-command-form">
+      <label for="ops-shell">SHELL</label>
+      <select id="ops-shell"><option value="cmd">CMD</option><option value="powershell">PowerShell</option></select>
+      <label for="ops-command">COMMAND</label>
+      <textarea id="ops-command" maxlength="2000" rows="3" spellcheck="false" placeholder="Enter a local command (Ctrl+Enter to run)"></textarea>
+      <div class="ops-console-actions">
+        <button class="network-primary-btn" id="ops-run" type="submit">Run Command</button>
+        <button id="ops-stop" type="button" disabled>Stop</button>
+        <button id="ops-clear" type="button">Clear Output</button>
+        <span id="ops-command-status" role="status" aria-live="polite">Ready</span>
+      </div>
+    </form>
+    <pre id="ops-output" role="log" aria-live="off" aria-label="Command output">Output appears here after you run a command.</pre>
+    <small>One command at a time · 30 second limit · 128 KB output limit · output is not saved</small>
   </article>
 </section>
 
@@ -985,13 +1003,13 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.4</span>
+  Version <span id="release-version">0.1.5</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Added a signed-release check for future Windows publishing.</li>
-  <li>Documented Windows compatibility and installer trust requirements.</li>
-  <li>Retained the network and security monitoring features from v0.1.3.</li>
+  <li>Added local CMD and PowerShell consoles to Operations.</li>
+  <li>Added command approval, live output, Stop control, and resource limits.</li>
+  <li>Retained active network and security monitoring while commands run.</li>
 </ul>
 
         <ul class="release-notes">
@@ -1076,5 +1094,6 @@
 
   <script src="renderer.js"></script>
   <script src="security-operations.js"></script>
+  <script src="operations-console.js"></script>
 </body>
 </html>

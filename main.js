@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Menu, dialog, safeStorage } = require("electron");
 const path = require("path");
+const { pathToFileURL } = require("url");
 const os = require("os");
 const dns = require("dns").promises;
 const fs = require("fs/promises");
@@ -9,6 +10,7 @@ const { autoUpdater } = require("electron-updater");
 const { normalizeConnections, findConnectionObservations, parseNetstatAttempts } = require("./security-core");
 const { renderIncidentReport } = require("./incident-report");
 const { firewallTarget } = require("./security-actions");
+const { shellSpec, runCommand } = require("./operations-shell");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -179,6 +181,42 @@ ipcMain.handle("get-incident-block-status", async (_event, incidentId, remoteAdd
 });
 
 let mainWindow;
+let activeOperationsCommand = null;
+
+ipcMain.handle("run-operations-command", async (event, shell, command) => {
+    if (process.platform !== "win32" || !mainWindow || event.sender !== mainWindow.webContents ||
+        event.sender.getURL() !== pathToFileURL(path.join(__dirname, "index.html")).href) {
+        return { started: false, error: "Local Cybeck window required." };
+    }
+    if (activeOperationsCommand) return { started: false, error: "A command is already running." };
+    try { shellSpec(shell, command); }
+    catch (error) { return { started: false, error: error.message }; }
+    const approval = await dialog.showMessageBox(mainWindow, {
+        type: "warning", buttons: ["Cancel", "Run Command"], defaultId: 0, cancelId: 0,
+        title: "Run local command",
+        message: `Run this ${shell === "cmd" ? "CMD" : "PowerShell"} command as your Windows account?`,
+        detail: command
+    });
+    if (approval.response !== 1) return { started: false, canceled: true };
+    if (activeOperationsCommand) return { started: false, error: "A command is already running." };
+    const sender = event.sender;
+    const emit = (data) => { if (!sender.isDestroyed()) sender.send("operations-command-event", data); };
+    try {
+        const operation = runCommand(shell, command,
+            (stream, output) => emit({ type: "output", stream, output }),
+            (result) => {
+                activeOperationsCommand = null;
+                emit({ type: "done", ...result });
+            });
+        activeOperationsCommand = operation;
+        return { started: true };
+    } catch (error) { return { started: false, error: error.message }; }
+});
+
+ipcMain.handle("stop-operations-command", (event) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents) return false;
+    return activeOperationsCommand?.stop() || false;
+});
 
 // ======================================================
 // AUTO UPDATER CONFIGURATION
@@ -222,6 +260,11 @@ function createWindow() {
     
     });
 
+    const appUrl = pathToFileURL(path.join(__dirname, "index.html")).href;
+    mainWindow.webContents.on("will-navigate", (event, url) => {
+        if (url !== appUrl) event.preventDefault();
+    });
+    mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
     mainWindow.loadFile("index.html");
 
     // Start maximized
@@ -231,6 +274,7 @@ function createWindow() {
     mainWindow.setMenuBarVisibility(false);
 
     mainWindow.on("closed", () => {
+        activeOperationsCommand?.stop();
         mainWindow = null;
     });
 }
@@ -1398,7 +1442,7 @@ ipcMain.handle("get-app-info", async () => {
     return {
         productName: "Cybeck Security Systems",
         version: app.getVersion(),
-        buildDate: "19 September 2026",
+        buildDate: "20 September 2026",
         releaseChannel: "Stable"
     };
 

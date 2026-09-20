@@ -48,6 +48,9 @@ contextBridge.exposeInMainWorld(
         blockIncidentIp: (incidentId, remoteAddress) => ipcRenderer.invoke("block-incident-ip", incidentId, remoteAddress),
         removeIncidentBlock: (incidentId, remoteAddress) => ipcRenderer.invoke("remove-incident-block", incidentId, remoteAddress),
         getIncidentBlockStatus: (incidentId, remoteAddress) => ipcRenderer.invoke("get-incident-block-status", incidentId, remoteAddress),
+        runOperationsCommand: (shell, command) => ipcRenderer.invoke("run-operations-command", shell, command),
+        stopOperationsCommand: () => ipcRenderer.invoke("stop-operations-command"),
+        onOperationsCommandEvent: (callback) => ipcRenderer.on("operations-command-event", (_event, data) => callback(data)),
 
         getAppInfo: () => {
             return ipcRenderer.invoke(
