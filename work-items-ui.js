@@ -26,11 +26,16 @@
         const stage = get("note-cycle-stage");
         stage.replaceChildren();
         for (const [index, urgency] of urgencies.entries()) {
-            const offset = index - urgencies.indexOf(noteUrgency);
+            const rawOffset = index - urgencies.indexOf(noteUrgency);
+            const offset = ((rawOffset + 2 + urgencies.length) % urgencies.length) - 2;
             const card = document.createElement("button");
             card.type = "button";
             card.className = `note-cycle-card${offset === 0 ? " selected" : ""}`;
             card.style.setProperty("--cycle-offset", String(offset));
+            card.style.setProperty("--cycle-x", `${offset * 78}px`);
+            card.style.setProperty("--cycle-y", `${Math.abs(offset) * 13}px`);
+            card.style.setProperty("--cycle-turn", `${offset * -8}deg`);
+            card.style.setProperty("--cycle-scale", String(1 - Math.abs(offset) * .13));
             card.textContent = urgency.toUpperCase();
             card.setAttribute("aria-pressed", String(offset === 0));
             card.addEventListener("click", () => { noteUrgency = urgency; get("note-urgency").value = urgency; renderCycle(); renderNotes(); });
@@ -132,6 +137,29 @@
         renderCycle(); renderNotes();
     });
     get("note-urgency").addEventListener("change", (event) => { noteUrgency = event.target.value; renderCycle(); renderNotes(); });
+    get("note-cycle-stage").addEventListener("wheel", (event) => {
+        event.preventDefault();
+        const step = event.deltaY > 0 ? 1 : -1;
+        noteUrgency = urgencies[(urgencies.indexOf(noteUrgency) + step + urgencies.length) % urgencies.length];
+        get("note-urgency").value = noteUrgency;
+        renderCycle(); renderNotes();
+    }, { passive: false });
+
+    get("open-notes-folder")?.addEventListener("click", async () => {
+        const result = await bridge.openNotesFolder();
+        announce(result.error || "Opened the readable Notes folder in File Explorer.");
+    });
+    get("restore-note-file")?.addEventListener("click", async () => {
+        const result = await bridge.importNoteFile();
+        if (result.error) { announce(result.error); return; }
+        if (!result.note) return;
+        const existing = state.notes.find((note) => note.id === result.note.id);
+        if (existing) Object.assign(existing, result.note);
+        else state.notes.unshift(result.note);
+        noteUrgency = result.note.urgency;
+        renderCycle(); renderNotes(); persist(); editItem("note", existing || result.note);
+        announce("Note restored from the selected text file.");
+    });
 
     document.addEventListener("click", (event) => {
         const button = event.target.closest("[data-create-work]");

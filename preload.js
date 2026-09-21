@@ -72,6 +72,12 @@ contextBridge.exposeInMainWorld(
         saveWorkItems: (data) => ipcRenderer.invoke("save-work-items", data),
         exportWorkItems: (data) => ipcRenderer.invoke("export-work-items", data),
         importWorkItems: () => ipcRenderer.invoke("import-work-items"),
+        openNotesFolder: () => ipcRenderer.invoke("open-notes-folder"),
+        importNoteFile: () => ipcRenderer.invoke("import-note-file"),
+        getVaultSession: () => ipcRenderer.invoke("get-vault-session"),
+        createVaultProfile: (profile) => ipcRenderer.invoke("create-vault-profile", profile),
+        unlockVault: (profileId, password) => ipcRenderer.invoke("unlock-vault", profileId, password),
+        lockVault: () => ipcRenderer.invoke("lock-vault"),
         onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),
 
         getAppInfo: () => {

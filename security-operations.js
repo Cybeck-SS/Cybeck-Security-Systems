@@ -7,6 +7,8 @@
     const history = { days: {}, incidents: [], events: [] };
     const pendingEvents = [];
     const observedAt = new Map();
+    let connectionSequence = 0;
+    const incidentExpanded = new Map();
     const processNames = new Map();
     const attemptTimes = new Map();
     const attemptAlerted = new Map();
@@ -160,12 +162,28 @@
         if (!list) return;
         list.replaceChildren();
         if (!history.incidents.length) { list.textContent = "No incidents recorded."; return; }
-        for (const incident of history.incidents.slice(0, 30)) {
-            const card = el("article", "incident-card");
-            const head = el("div", "incident-heading");
+        const incidents = history.incidents.slice(0, 30);
+        const severities = [...new Set(incidents.map((incident) => incident.severity || "WARNING"))]
+            .sort((a, b) => ({ ALERT: 0, WARNING: 1, INFO: 2 }[a] ?? 3) - ({ ALERT: 0, WARNING: 1, INFO: 2 }[b] ?? 3));
+        for (const severity of severities) for (const [sectionLabel, include] of [
+            ["Active", (incident) => isOpen(incident)],
+            ["Completed", (incident) => !isOpen(incident)]
+        ]) {
+            const grouped = incidents.filter((incident) => (incident.severity || "WARNING") === severity && include(incident));
+            if (!grouped.length) continue;
+            const group = el("details", `incident-group incident-group-${sectionLabel.toLowerCase()}`);
+            group.open = sectionLabel === "Active";
+            group.append(el("summary", "incident-group-summary", `${severity} · ${sectionLabel} (${grouped.length})`));
+            const section = el("div", "incident-section");
+            for (const incident of grouped) {
+            const card = el("details", "incident-card");
+            card.dataset.incidentCard = incident.id;
+            card.open = incidentExpanded.has(incident.id) ? incidentExpanded.get(incident.id) : isOpen(incident);
+            const head = el("summary", "incident-heading");
             head.append(el("strong", "", `${incident.id} · ${incident.event}`),
                 el("span", "", `${incident.severity} · ${incident.status}`));
-            card.append(head, el("p", "", incident.evidence),
+            const content = el("div", "incident-content");
+            content.append(el("p", "", incident.evidence),
                 el("small", "", `Detected ${new Date(incident.detected).toLocaleString()} · ${incident.process} · ${incident.remoteAddress}:${incident.remotePort || "—"}`));
             const controls = el("div", "incident-controls");
             const followUp = el("button", "", "Create task");
@@ -188,23 +206,32 @@
                 button.dataset.incidentAction = action;
                 controls.append(button);
             }
-            card.append(controls);
-            if (incident.firewallRuleName) card.append(el("small", "incident-block-state", `Outbound IP block active: ${incident.remoteAddress}`));
-            if (incident.lastActionMessage) card.append(el("small", "incident-action-status", incident.lastActionMessage));
+            content.append(controls);
+            if (incident.firewallRuleName) content.append(el("small", "incident-block-state", `Outbound IP block active: ${incident.remoteAddress}`));
+            if (incident.lastActionMessage) content.append(el("small", "incident-action-status", incident.lastActionMessage));
             const note = el("textarea", "incident-note");
             note.placeholder = "Analyst notes";
             note.setAttribute("aria-label", `Notes for ${incident.id}`);
             note.value = incident.notes || "";
             note.dataset.incidentNote = incident.id;
-            card.append(note);
+            content.append(note);
             const timeline = el("div", "incident-timeline");
             for (const entry of (incident.timeline || []).slice(-5)) {
                 timeline.append(el("div", "", `${new Date(entry.time).toLocaleString()} · ${entry.action}`));
             }
-            card.append(timeline);
-            list.append(card);
+            content.append(timeline);
+            card.append(head, content);
+            section.append(card);
+            }
+            group.append(section);
+            list.append(group);
         }
     }
+
+    document.getElementById("incident-list")?.addEventListener("toggle", (event) => {
+        const card = event.target.closest?.("[data-incident-card]");
+        if (card === event.target) incidentExpanded.set(card.dataset.incidentCard, card.open);
+    }, true);
 
     document.getElementById("incident-list")?.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-incident-action]");
@@ -345,14 +372,19 @@
             body.replaceChildren();
             const now = Date.now();
             for (const row of rows) {
+                const key = connectionKey(row);
+                if (!observedAt.has(key)) observedAt.set(key, { firstSeen: now, sequence: ++connectionSequence });
+            }
+            const newestFirst = [...rows].sort((a, b) => observedAt.get(connectionKey(b)).sequence - observedAt.get(connectionKey(a)).sequence);
+            for (const row of newestFirst) {
                 processNames.set(row.processId, row.process);
                 const key = connectionKey(row);
                 currentKeys.add(key);
-                if (!observedAt.has(key)) observedAt.set(key, now);
+                const observed = observedAt.get(key);
                 const tr = el("tr");
                 for (const value of [row.process, `${row.localAddress}:${row.localPort}`,
                     row.remoteAddress || "—", row.remotePort || "—", row.protocol,
-                    row.state, `${Math.floor((now - observedAt.get(key)) / 1000)}s`]) {
+                    row.state, `${Math.floor((now - observed.firstSeen) / 1000)}s`]) {
                     tr.append(el("td", "", value));
                 }
                 body.append(tr);

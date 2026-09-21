@@ -15,12 +15,69 @@ const { createSessionAccess } = require("./operations-access");
 const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
 const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, validateAnyDeskAddress, findAnyDesk, verifyAnyDeskExecutable } = require("./anydesk-integration");
 const { normalizeWorkItems } = require("./work-items-store");
+const { renderNoteFile, parseNoteFile, noteFileName, historyFileName, noteFolder } = require("./note-files");
+const { createProfile, verifyPassword, publicProfile, normalizeVaultProfiles } = require("./vault-auth");
 const { installDownloadedUpdate } = require("./updater-install");
 const { chooseActiveAdapter } = require("./network-adapter");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
 const workItemsPath = () => path.join(app.getPath("userData"), "work-items.json");
+const notesFolderPath = () => noteFolder(app.getPath("documents"));
+const vaultProfilesPath = () => path.join(app.getPath("userData"), "vault-profiles.json");
+let unlockedVaultProfileId = null;
+const vaultFailures = new Map();
+
+async function loadVaultStore() {
+    try {
+        const stored = JSON.parse(await fs.readFile(vaultProfilesPath(), "utf8"));
+        if (!stored.encrypted) throw new Error("Unencrypted Vault profile store rejected.");
+        return normalizeVaultProfiles(JSON.parse(safeStorage.decryptString(Buffer.from(stored.data, "base64"))));
+    } catch (error) {
+        if (error.code === "ENOENT") return { schema: 1, profiles: [] };
+        throw error;
+    }
+}
+
+async function saveVaultStore(store) {
+    if (!safeStorage.isEncryptionAvailable()) throw new Error("Windows encryption is unavailable.");
+    const destination = vaultProfilesPath();
+    const temporary = `${destination}.${process.pid}.${Date.now()}.tmp`;
+    const encrypted = safeStorage.encryptString(JSON.stringify(store));
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.writeFile(temporary, JSON.stringify({ encrypted: true, data: encrypted.toString("base64") }), "utf8");
+    await fs.rename(temporary, destination);
+}
+
+async function syncReadableNotes(notes) {
+    const root = notesFolderPath();
+    const current = path.join(root, "Current");
+    const history = path.join(root, "History");
+    await fs.mkdir(current, { recursive: true });
+    await fs.mkdir(history, { recursive: true });
+    const activeNames = new Set(notes.map(noteFileName));
+    for (const note of notes) {
+        const name = noteFileName(note);
+        const destination = path.join(current, name);
+        const next = renderNoteFile(note);
+        try {
+            const existing = await fs.readFile(destination, "utf8");
+            if (existing === next) continue;
+            const noteHistory = path.join(history, note.id);
+            await fs.mkdir(noteHistory, { recursive: true });
+            await fs.writeFile(path.join(noteHistory, historyFileName()), existing, "utf8");
+        } catch (error) { if (error.code !== "ENOENT") throw error; }
+        await fs.writeFile(destination, next, "utf8");
+    }
+    for (const name of await fs.readdir(current)) {
+        if (!name.endsWith(".txt") || activeNames.has(name)) continue;
+        const id = path.basename(name, ".txt");
+        const archived = path.join(history, id);
+        await fs.mkdir(archived, { recursive: true });
+        await fs.rename(path.join(current, name), path.join(archived, `deleted-${historyFileName()}`));
+    }
+    return root;
+}
 let previousConnectionScan = null;
 
 ipcMain.handle("get-connection-attempts", async () => {
@@ -90,7 +147,7 @@ ipcMain.handle("save-security-history", async (_event, supplied) => {
         events: Array.isArray(supplied.events) ? supplied.events.slice(-500) : []
     };
     const destination = historyPath();
-    const temporary = `${destination}.tmp`;
+    const temporary = `${destination}.${process.pid}.${Date.now()}.tmp`;
     try {
         if (!safeStorage.isEncryptionAvailable()) return false;
         const encrypted = safeStorage.encryptString(JSON.stringify(safe));
@@ -121,12 +178,13 @@ ipcMain.handle("save-work-items", async (event, supplied) => {
         if (!safeStorage.isEncryptionAvailable()) throw new Error("Windows encryption is unavailable.");
         const data = normalizeWorkItems(supplied);
         const destination = workItemsPath();
-        const temporary = `${destination}.tmp`;
+        const temporary = `${destination}.${process.pid}.${Date.now()}.tmp`;
         const encrypted = safeStorage.encryptString(JSON.stringify(data));
         await fs.mkdir(path.dirname(destination), { recursive: true });
         await fs.writeFile(temporary, JSON.stringify({ encrypted: true, data: encrypted.toString("base64") }), "utf8");
         await fs.rename(temporary, destination);
-        return { saved: true, data };
+        const notesFolder = await syncReadableNotes(data.notes);
+        return { saved: true, data, notesFolder };
     } catch (error) { return { saved: false, error: error.message }; }
 });
 
@@ -150,6 +208,76 @@ ipcMain.handle("import-work-items", async (event) => {
         if (file.length > 6 * 1024 * 1024) throw new Error("File exceeds 6 MB limit.");
         return { data: normalizeWorkItems(JSON.parse(file)) };
     } catch (error) { return { error: `Import failed: ${error.message}` }; }
+});
+
+ipcMain.handle("open-notes-folder", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const folder = notesFolderPath();
+        await fs.mkdir(path.join(folder, "Current"), { recursive: true });
+        await fs.mkdir(path.join(folder, "History"), { recursive: true });
+        const error = await shell.openPath(folder);
+        return error ? { error } : { opened: true, folder };
+    } catch (error) { return { error: error.message }; }
+});
+
+ipcMain.handle("import-note-file", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const result = await dialog.showOpenDialog(mainWindow, { title: "Restore a Cybeck Note", defaultPath: path.join(notesFolderPath(), "Current"), properties: ["openFile"], filters: [{ name: "Cybeck Notes", extensions: ["txt"] }] });
+        if (result.canceled || !result.filePaths.length) return { canceled: true };
+        const file = await fs.readFile(result.filePaths[0], "utf8");
+        if (file.length > 1024 * 1024) throw new Error("Note exceeds 1 MB limit.");
+        const normalized = normalizeWorkItems({ schema: 1, tasks: [], notes: [parseNoteFile(file)] });
+        return { note: normalized.notes[0] };
+    } catch (error) { return { error: `Restore failed: ${error.message}` }; }
+});
+
+ipcMain.handle("get-vault-session", async (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const store = await loadVaultStore();
+        return { profiles: store.profiles.map(publicProfile), unlockedProfileId: unlockedVaultProfileId };
+    } catch (error) { return { error: `Vault profiles could not be read: ${error.message}` }; }
+});
+
+ipcMain.handle("create-vault-profile", async (event, supplied) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const store = await loadVaultStore();
+        if (store.profiles.length >= 8) throw new Error("The Vault supports up to 8 local profiles.");
+        const profile = createProfile(supplied?.name, supplied?.role, supplied?.password);
+        store.profiles.push(profile);
+        await saveVaultStore(store);
+        unlockedVaultProfileId = profile.id;
+        return { created: true, profile: publicProfile(profile), unlockedProfileId: profile.id };
+    } catch (error) { return { error: error.message }; }
+});
+
+ipcMain.handle("unlock-vault", async (event, profileId, password) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    const now = Date.now();
+    const failure = vaultFailures.get(profileId) || { count: 0, blockedUntil: 0 };
+    if (failure.blockedUntil > now) return { error: `Too many attempts. Try again in ${Math.ceil((failure.blockedUntil - now) / 1000)} seconds.` };
+    try {
+        const store = await loadVaultStore();
+        const profile = store.profiles.find((item) => item.id === profileId);
+        if (!profile || !verifyPassword(profile, password)) {
+            failure.count += 1;
+            if (failure.count >= 5) { failure.count = 0; failure.blockedUntil = now + 30000; }
+            vaultFailures.set(profileId, failure);
+            return { error: "Profile or password was not recognized." };
+        }
+        vaultFailures.delete(profileId);
+        unlockedVaultProfileId = profile.id;
+        return { unlocked: true, profile: publicProfile(profile) };
+    } catch (error) { return { error: error.message }; }
+});
+
+ipcMain.handle("lock-vault", (event) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    unlockedVaultProfileId = null;
+    return { locked: true };
 });
 
 ipcMain.handle("export-incident-report", async (_event, report) => {
@@ -1396,7 +1524,7 @@ ipcMain.handle("get-app-info", async () => {
     return {
         productName: "Cybeck Security Systems",
         version: app.getVersion(),
-        buildDate: "20 September 2026",
+        buildDate: "21 September 2026",
         releaseChannel: "Stable"
     };
 
