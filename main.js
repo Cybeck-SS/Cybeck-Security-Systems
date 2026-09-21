@@ -15,6 +15,8 @@ const { createSessionAccess } = require("./operations-access");
 const { validateHost, validateTarget, checkRemoteDesktop, resourceCommand, runRemote } = require("./remote-systems");
 const { DOWNLOAD_URL: ANYDESK_DOWNLOAD_URL, validateAnyDeskAddress, findAnyDesk, verifyAnyDeskExecutable } = require("./anydesk-integration");
 const { normalizeWorkItems } = require("./work-items-store");
+const { installDownloadedUpdate } = require("./updater-install");
+const { chooseActiveAdapter } = require("./network-adapter");
 
 const execFileAsync = promisify(execFile);
 const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
@@ -447,7 +449,10 @@ ipcMain.handle("open-anydesk-download", async (event) => {
 // ======================================================
 
 autoUpdater.autoDownload = false;
-autoUpdater.autoInstallOnAppQuit = true;
+// Install only after the user chooses Install and Restart. An ordinary app exit
+// must not trigger a silent update that has no forced relaunch.
+autoUpdater.autoInstallOnAppQuit = false;
+autoUpdater.autoRunAppAfterInstall = true;
 autoUpdater.logger = console;
 
 function createWindow() {
@@ -552,392 +557,109 @@ ipcMain.on("window-close", () => {
 // ======================================================
 
 ipcMain.handle("get-network-info", async () => {
-
-    // --------------------------------------------------
-    // DEFAULT RESPONSE
-    // --------------------------------------------------
-
     const networkInfo = {
-        connected: false,
-        internet: false,
-
-        ssid: "No Wi-Fi connection",
-        signal: 0,
-
-        ipv4: "Unavailable",
-        gateway: "Unavailable",
-        dns: "Unavailable",
-
-        adapter: "Unavailable",
-        interfaceDescription: "Unavailable",
-        mac: "Unavailable",
-        linkSpeed: "Unavailable",
-
-        connectionType: "Unknown",
-
-        latency: null
+        connected: false, internet: false, ssid: "Unavailable", networkName: "Unavailable", signal: null,
+        ipv4: "Unavailable", gateway: "Unavailable", dns: "Unavailable", adapter: "Unavailable",
+        interfaceDescription: "Unavailable", mac: "Unavailable", linkSpeed: "Unavailable",
+        connectionType: "Unknown", interfaceIndex: null, routeMetric: null, linkState: "Down", latency: null
     };
 
-
-    // ==================================================
-    // 1. WIFI INFORMATION
-    // ==================================================
-
+    // Wi-Fi can remain associated while Ethernet carries the actual route.
+    // Select Windows' usable IPv4 default route with the lowest combined metric.
     try {
-
-        const wifiOutput = await new Promise((resolve, reject) => {
-
-            exec(
-                "netsh wlan show interfaces",
-                {
-                    windowsHide: true
-                },
-                (error, stdout) => {
-
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-
-                    resolve(stdout);
-                }
-            );
-
-        });
-
-
-        // ----------------------------------------------
-        // CONNECTION STATE
-        // ----------------------------------------------
-
-        const stateMatch =
-            wifiOutput.match(/State\s*:\s*(.+)/i);
-
-        const state =
-            stateMatch
-                ? stateMatch[1].trim()
-                : "unknown";
-
-
-        networkInfo.connected =
-            state.toLowerCase() === "connected";
-
-
-        // ----------------------------------------------
-        // SSID
-        // ----------------------------------------------
-
-        const ssidMatch =
-            wifiOutput.match(/^\s*SSID\s*:\s*(.+)$/im);
-
-        if (ssidMatch) {
-
-            networkInfo.ssid =
-                ssidMatch[1].trim();
-
-        }
-
-
-        // ----------------------------------------------
-        // SIGNAL
-        // ----------------------------------------------
-
-        const signalMatch =
-            wifiOutput.match(/Signal\s*:\s*(\d+)%/i);
-
-        if (signalMatch) {
-
-            networkInfo.signal =
-                Number(signalMatch[1]);
-
-        }
-
-
-        // ----------------------------------------------
-        // CONNECTION TYPE
-        // ----------------------------------------------
-
-        if (networkInfo.connected) {
-
-            networkInfo.connectionType = "Wi-Fi";
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[NETWORK] Wi-Fi detection failed:",
-            error.message
-        );
-
-    }
-
-
-    // ==================================================
-    // 2. WINDOWS NETWORK CONFIGURATION
-    // ==================================================
-
-    try {
-
         const powerShellScript = `
-
 $ErrorActionPreference = "SilentlyContinue"
-
-$config = Get-NetIPConfiguration |
-    Where-Object {
-        $_.IPv4DefaultGateway -ne $null
-    } |
-    Select-Object -First 1
-
-if ($config) {
-
-    $adapter = Get-NetAdapter |
-        Where-Object {
-            $_.InterfaceIndex -eq $config.InterfaceIndex
-        } |
-        Select-Object -First 1
-
-    $dnsServers = @()
-
-    if ($config.DNSServer) {
-        $dnsServers = $config.DNSServer.ServerAddresses
+$rows = @(Get-NetRoute -AddressFamily IPv4 -DestinationPrefix "0.0.0.0/0" |
+    Where-Object { $_.NextHop -and $_.NextHop -ne "0.0.0.0" } | ForEach-Object {
+        $route = $_
+        $adapter = Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+        $ipInterface = Get-NetIPInterface -AddressFamily IPv4 -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+        $config = Get-NetIPConfiguration -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+        $profile = Get-NetConnectionProfile -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+        [PSCustomObject]@{
+            InterfaceIndex = $route.InterfaceIndex
+            EffectiveMetric = [int]$route.RouteMetric + [int]$ipInterface.InterfaceMetric
+            Name = $adapter.Name
+            InterfaceDescription = $adapter.InterfaceDescription
+            Status = [string]$adapter.Status
+            MediaType = [string]$adapter.MediaType
+            PhysicalMediaType = [string]$adapter.PhysicalMediaType
+            MAC = $adapter.MacAddress
+            LinkSpeed = $adapter.LinkSpeed
+            IPv4 = [string]($config.IPv4Address | Select-Object -First 1).IPAddress
+            Gateway = [string]$route.NextHop
+            DNS = [string](($config.DNSServer.ServerAddresses | Where-Object { $_ }) -join ", ")
+            ProfileName = [string]$profile.Name
+        }
+    })
+$rows | ConvertTo-Json -Depth 3 -Compress`;
+        const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", powerShellScript], {
+            windowsHide: true, timeout: 8000, maxBuffer: 1024 * 1024
+        });
+        const active = chooseActiveAdapter(stdout.trim() ? JSON.parse(stdout) : []);
+        if (active) {
+            networkInfo.connected = true;
+            networkInfo.ipv4 = active.IPv4 || "Unavailable";
+            networkInfo.gateway = active.Gateway || "Unavailable";
+            networkInfo.dns = active.DNS || "Unavailable";
+            networkInfo.adapter = active.Name || "Unavailable";
+            networkInfo.interfaceDescription = active.InterfaceDescription || "Unavailable";
+            networkInfo.mac = active.MAC || "Unavailable";
+            networkInfo.linkSpeed = active.LinkSpeed || "Unavailable";
+            networkInfo.connectionType = active.ConnectionType;
+            networkInfo.interfaceIndex = Number(active.InterfaceIndex) || null;
+            networkInfo.routeMetric = Number(active.EffectiveMetric) || null;
+            networkInfo.linkState = "Up";
+            networkInfo.networkName = active.ProfileName || active.Name || active.ConnectionType;
+        }
+    } catch (error) {
+        console.error("[NETWORK] Active adapter detection failed:", error.message);
     }
 
-    [PSCustomObject]@{
-
-        IPv4 = if ($config.IPv4Address) {
-            $config.IPv4Address.IPAddress
-        }
-        else {
-            ""
-        }
-
-        Gateway = if ($config.IPv4DefaultGateway) {
-            $config.IPv4DefaultGateway.NextHop
-        }
-        else {
-            ""
-        }
-
-        DNS = $dnsServers -join ", "
-
-        Adapter = if ($adapter) {
-            $adapter.Name
-        }
-        else {
-            $config.InterfaceAlias
-        }
-
-        InterfaceDescription = if ($adapter) {
-            $adapter.InterfaceDescription
-        }
-        else {
-            ""
-        }
-
-        MAC = if ($adapter) {
-            $adapter.MacAddress
-        }
-        else {
-            ""
-        }
-
-        LinkSpeed = if ($adapter) {
-            $adapter.LinkSpeed
-        }
-        else {
-            ""
-        }
-
-    } | ConvertTo-Json -Compress
-
-}
-`;
-
-        const adapterOutput =
-            await new Promise((resolve, reject) => {
-
-                execFile(
-                    "powershell.exe",
-                    [
-                        "-NoProfile",
-                        "-NonInteractive",
-                        "-Command",
-                        powerShellScript
-                    ],
-                    {
-                        windowsHide: true,
-                        maxBuffer: 1024 * 1024
-                    },
-                    (error, stdout) => {
-
-                        if (error) {
-                            reject(error);
-                            return;
-                        }
-
-                        resolve(stdout);
-
-                    }
-                );
-
+    // Radio information is meaningful only when the selected route is Wi-Fi.
+    if (networkInfo.connected && networkInfo.connectionType === "Wi-Fi") {
+        try {
+            const { stdout } = await execFileAsync("netsh.exe", ["wlan", "show", "interfaces"], {
+                windowsHide: true, timeout: 4000, maxBuffer: 512 * 1024
             });
-
-
-        if (adapterOutput.trim()) {
-
-            const data =
-                JSON.parse(adapterOutput.trim());
-
-
-            networkInfo.ipv4 =
-                data.IPv4 ||
-                "Unavailable";
-
-
-            networkInfo.gateway =
-                data.Gateway ||
-                "Unavailable";
-
-
-            networkInfo.dns =
-                data.DNS ||
-                "Unavailable";
-
-
-            networkInfo.adapter =
-                data.Adapter ||
-                "Unavailable";
-
-
-            networkInfo.interfaceDescription =
-                data.InterfaceDescription ||
-                "Unavailable";
-
-
-            networkInfo.mac =
-                data.MAC ||
-                "Unavailable";
-
-
-            networkInfo.linkSpeed =
-                data.LinkSpeed ||
-                "Unavailable";
-
-
-            // Detect Ethernet if Windows is using one
-            if (
-                !networkInfo.connected &&
-                networkInfo.adapter !== "Unavailable"
-            ) {
-
-                networkInfo.connectionType =
-                    networkInfo.adapter
-                        .toLowerCase()
-                        .includes("wi-fi")
-                        ? "Wi-Fi"
-                        : "Ethernet";
-
-            }
-
+            const blocks = stdout.split(/\r?\n\s*\r?\n/);
+            const expected = networkInfo.adapter.toLowerCase();
+            const block = blocks.find((part) =>
+                part.match(/^\s*Name\s*:\s*(.+)$/im)?.[1]?.trim().toLowerCase() === expected
+            ) || stdout;
+            const ssid = block.match(/^\s*SSID\s*:\s*(.+)$/im)?.[1]?.trim();
+            const signal = block.match(/^\s*Signal\s*:\s*(\d+)%/im)?.[1];
+            if (ssid) networkInfo.ssid = ssid;
+            if (signal !== undefined) networkInfo.signal = Math.max(0, Math.min(100, Number(signal)));
+            networkInfo.networkName = ssid || networkInfo.networkName;
+        } catch (error) {
+            console.error("[NETWORK] Wi-Fi radio details unavailable:", error.message);
         }
-
+    } else if (networkInfo.connected && networkInfo.connectionType === "Ethernet") {
+        networkInfo.ssid = "Not applicable (wired)";
     }
 
-    catch (error) {
-
-        console.error(
-            "[NETWORK] Adapter detection failed:",
-            error.message
-        );
-
-    }
-
-
-    // ==================================================
-    // 3. INTERNET CONNECTIVITY + LATENCY
-    // ==================================================
-
-    try {
-
-        const pingOutput =
+    // TCP 443 confirms usable connectivity even when a network blocks ICMP ping.
+    if (networkInfo.connected) {
+        const startedAt = Date.now();
+        try {
+            const net = require("net");
             await new Promise((resolve, reject) => {
-
-                exec(
-                    "ping 1.1.1.1 -n 1 -w 1500",
-                    {
-                        windowsHide: true
-                    },
-                    (error, stdout) => {
-
-                        if (error) {
-                            reject(error);
-                            return;
-                        }
-
-                        resolve(stdout);
-
-                    }
-                );
-
+                const socket = net.createConnection({ host: "1.1.1.1", port: 443 });
+                const timer = setTimeout(() => socket.destroy(new Error("Connectivity probe timed out.")), 2500);
+                socket.once("connect", () => { clearTimeout(timer); socket.destroy(); resolve(); });
+                socket.once("error", (error) => { clearTimeout(timer); reject(error); });
             });
-
-
-        networkInfo.internet = true;
-
-
-        // Windows may return:
-        // time=18ms
-        // time<1ms
-
-        const latencyMatch =
-            pingOutput.match(
-                /time[=<]\s*(\d+)ms/i
-            );
-
-
-        if (latencyMatch) {
-
-            networkInfo.latency =
-                Number(latencyMatch[1]);
-
+            networkInfo.internet = true;
+            networkInfo.latency = Math.max(1, Date.now() - startedAt);
+        } catch (error) {
+            networkInfo.internet = false;
+            networkInfo.latency = null;
         }
-
     }
 
-    catch (error) {
-
-        networkInfo.internet = false;
-        networkInfo.latency = null;
-
-    }
-
-
-    // ==================================================
-    // FINAL CONNECTION CHECK
-    // ==================================================
-
-    // A machine may have Ethernet instead of Wi-Fi.
-    if (
-        !networkInfo.connected &&
-        networkInfo.ipv4 !== "Unavailable"
-    ) {
-
-        networkInfo.connected = true;
-
-    }
-
-
-    console.log(
-        "[NETWORK] Current network:",
-        networkInfo
-    );
-
-
+    console.log("[NETWORK] Current network:", networkInfo);
     return networkInfo;
-
 });
 
 // ======================================================
@@ -1650,13 +1372,17 @@ ipcMain.handle(
 
 ipcMain.on(
     "install-update",
-    () => {
+    (event) => {
 
-        if (!app.isPackaged) {
+        if (!app.isPackaged || !isLocalOperationsWindow(event)) {
             return;
         }
 
-        autoUpdater.quitAndInstall();
+        sendUpdateStatus("installing", {
+            message: "Installing the update. Cybeck will restart automatically."
+        });
+
+        installDownloadedUpdate(autoUpdater);
 
     }
 );

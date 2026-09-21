@@ -1142,6 +1142,7 @@ h3 { margin: 4px 0 0; font-size: 20px; }
   font-size: 7px;
   letter-spacing: 1.5px;
 }
+.network-signal-caption[hidden] { display: none !important; }
 
 .network-information-grid {
   display: grid;
@@ -1156,7 +1157,6 @@ h3 { margin: 4px 0 0; font-size: 20px; }
         repeat(2, minmax(0, 1fr));
 
     gap: 18px;
-}
 }
 
 .network-panel {
@@ -2846,3 +2846,188 @@ details[open] > .ops-panel-toggle .ops-chevron { transform: rotate(180deg); }
 .incident-timeline { margin-top: 11px; color: var(--muted); font-size: 10px; line-height: 1.7; }
 @media (max-width: 1050px) { .ops-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ops-columns { grid-template-columns: 1fr; } }
 @media (max-width: 650px) { .ops-history .ops-metrics { grid-template-columns: 1fr; } .ops-activity-row { grid-template-columns: 1fr; } }
+
+/* =========================================================
+   LAYOUT AND TYPOGRAPHY HARDENING
+   Keep text and icons inside their own bordered components.
+   ========================================================= */
+
+button, input, select, textarea { max-width: 100%; }
+button { line-height: 1.3; overflow-wrap: anywhere; }
+
+.hero-copy,
+.card > div,
+.action > div,
+.network-info,
+.network-hero-copy,
+.network-metric-card,
+.network-panel-heading > div,
+.network-health-summary > div,
+.security-anomaly-state > div,
+.about-identity,
+.about-card,
+.ops-metrics > *,
+.ops-activity-row > *,
+.incident-heading > *,
+.work-header > *,
+.work-panel,
+.work-item,
+.ops-panel-toggle > span:nth-child(2) {
+  min-width: 0;
+}
+
+.hero-copy h2,
+.card strong,
+.card small,
+.action b,
+.action small,
+.network-panel-heading h3,
+.network-panel-heading p,
+.network-metric-card strong,
+.network-metric-card small,
+.network-health-summary strong,
+.network-health-summary small,
+.security-summary-card,
+.security-stat-grid,
+.security-event-message,
+.about-identity h2,
+.about-card,
+.about-meta-item strong,
+.ops-metrics strong,
+.ops-activity-row,
+.incident-heading,
+.incident-card,
+.work-header,
+.work-item,
+.ops-panel-toggle strong,
+.ops-panel-toggle small,
+.ops-remote-actions span {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.nav-icon,
+.card-icon,
+.action > span,
+.network-metric-icon,
+.network-panel-icon,
+.about-card-icon,
+.security-anomaly-icon,
+.placeholder-logo {
+  flex: 0 0 auto;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.network-panel-icon,
+.security-anomaly-icon {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.card-icon { min-width: 38px; }
+.action > span { min-width: 28px; }
+.network-panel-heading { min-width: 0; }
+.network-panel { padding: 18px; }
+.network-panel-heading h3 { line-height: 1.3; }
+.network-panel-heading p { line-height: 1.45; }
+.ops-chevron { flex: 0 0 auto; }
+
+.network-quick-dropdown {
+  position: relative;
+  inset: auto;
+  align-self: flex-end;
+  height: 42px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.network-quick-toggle { border-radius: 9px; }
+.network-quick-menu {
+  position: absolute;
+  top: 0;
+  right: 49px;
+  margin-left: 0;
+}
+
+.ops-activity-row { grid-template-columns: minmax(115px, 140px) minmax(60px, 75px) minmax(0, 1fr) auto; }
+.ops-activity-row button { align-self: center; }
+.incident-heading { flex-wrap: wrap; }
+
+@media (max-width: 1350px) {
+  .network-hero-panel {
+    grid-template-columns: 180px minmax(190px, 230px) minmax(0, 1fr);
+    gap: 18px;
+  }
+  .network-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1050px) {
+  .page { padding: 26px 24px 42px; }
+  .topbar { padding: 0 24px; }
+
+  .hero {
+    min-height: auto;
+    padding: 24px;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  .hero-logo img { width: min(190px, 55vw); height: min(190px, 55vw); }
+  .hero-copy h2 { font-size: clamp(27px, 6vw, 36px); }
+  .hero-copy p { line-height: 1.5; }
+
+  .network-hero-panel { padding: 20px; grid-template-columns: 1fr; }
+  .network-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .network-hero-copy h2 { font-size: clamp(27px, 7vw, 36px); overflow-wrap: anywhere; }
+
+  .about-hero {
+    padding: 26px;
+    flex-direction: column;
+    text-align: center;
+  }
+  .about-identity { width: 100%; }
+  .about-identity h2 { font-size: clamp(25px, 7vw, 34px); }
+  .about-meta { justify-content: center; }
+  .release-entry { grid-template-columns: minmax(80px, auto) minmax(0, 1fr); }
+  .release-date { grid-column: 1 / -1; text-align: left; }
+
+  .ops-activity-row { grid-template-columns: minmax(110px, 140px) minmax(60px, 75px) minmax(0, 1fr); }
+  .ops-activity-row button { grid-column: 1 / -1; justify-self: start; }
+}
+
+@media (max-width: 760px) {
+  .sidebar { width: 76px; flex-basis: 76px; padding: 18px 9px 12px; }
+  .brand-mini { justify-content: center; padding: 4px 0 20px; }
+  .brand-mini > div, .nav-item > span:not(.nav-icon), .sidebar-footer > span:not(.status-dot) { display: none; }
+  .nav-item { min-height: 46px; justify-content: center; padding: 10px; }
+  .nav-icon { width: 24px; font-size: 19px; }
+  .sidebar-footer { justify-content: center; padding-left: 0; padding-right: 0; }
+  .topbar { height: 74px; padding: 0 17px; }
+  .topbar h1 { font-size: 21px; }
+  .topbar .eyebrow { font-size: 7px; letter-spacing: 2px; }
+  .page { padding: 20px 16px 36px; }
+
+  .cards { grid-template-columns: 1fr; }
+  .section-heading { align-items: flex-start; gap: 12px; }
+  .about-meta { display: grid; grid-template-columns: 1fr; }
+  .about-meta-item { min-width: 0; text-align: left; }
+  .about-footer { flex-direction: column; gap: 7px; line-height: 1.5; }
+  .release-entry { grid-template-columns: 1fr; }
+  .release-date { grid-column: auto; }
+
+  .network-live-meta { width: 100%; justify-content: space-between; gap: 14px; }
+  .network-metric-grid { grid-template-columns: 1fr; }
+  .network-data-row { grid-template-columns: 1fr; gap: 4px; }
+  .network-health-gauges { grid-template-columns: 1fr; }
+  .network-signal-caption { letter-spacing: .6px; }
+  .network-quick-menu { width: min(205px, calc(100vw - 120px)); }
+
+  .security-summary-grid, .security-stat-grid { grid-template-columns: 1fr; }
+  .security-event { grid-template-columns: 1fr; gap: 5px; }
+  .ops-metrics { grid-template-columns: 1fr; }
+  .ops-activity-row { grid-template-columns: 1fr; }
+  .ops-activity-row button { grid-column: auto; }
+  .work-form-row { grid-template-columns: 1fr; }
+}

@@ -1,5 +1,5 @@
 @echo off
-title Cybeck Security Systems v0.1.11
+title Cybeck Security Systems v0.1.12
 cd /d "%~dp0"
 if not exist "node_modules" (
   echo Installing application dependencies...

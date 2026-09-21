@@ -1182,24 +1182,26 @@ function renderDashboardNetwork(
     }
 
 
-    const strength =
-        Number(network.signal) || 0;
+    const isWifi = network.connectionType === "Wi-Fi";
+    const strength = isWifi ? Number(network.signal) || 0 : 100;
 
 
-    status.textContent =
-        networkSignalQuality(
-            strength
-        );
+    status.textContent = isWifi
+        ? networkSignalQuality(strength)
+        : network.internet ? "CONNECTED" : "LOCAL ONLY";
 
 
     name.textContent =
+        network.networkName ||
         network.ssid ||
         network.adapter ||
         "Connected";
 
 
-    percent.textContent =
-        `${strength}%`;
+    percent.textContent = isWifi ? `${strength}%` : network.linkSpeed || "LINK UP";
+    setNetworkText("network-strength-label", isWifi ? "SIGNAL" : "LINK");
+    const signalBars = document.getElementById("signal-bars");
+    if (signalBars) signalBars.title = isWifi ? "Wi-Fi signal strength" : `${network.connectionType} link active`;
 
 
     let activeBars = 0;
@@ -1256,10 +1258,9 @@ function renderNetworkMonitor(
             network.internet
         );
 
-    const signal =
-        Number(
-            network.signal
-        ) || 0;
+    const isWifi = network.connectionType === "Wi-Fi";
+    const signal = isWifi ? Number(network.signal) || 0 : null;
+    const linkValue = connected && !isWifi ? 100 : signal || 0;
 
 
     const latency =
@@ -1274,10 +1275,7 @@ function renderNetworkMonitor(
 
 
 
-    const signalQuality =
-        networkSignalQuality(
-            signal
-        );
+    const signalQuality = isWifi ? networkSignalQuality(signal) : connected ? "LINK ACTIVE" : "LINK DOWN";
 
 
     const latencyQuality =
@@ -1330,7 +1328,7 @@ function renderNetworkMonitor(
 
     internet
 
-        ? "Your device is connected and has internet access."
+        ? `Your ${connectionType} connection is active and has internet access.`
 
         : connected
 
@@ -1352,8 +1350,10 @@ function renderNetworkMonitor(
 
     setNetworkText(
         "nm-signal",
-        `${signal}%`
+        isWifi ? `${signal}%` : connected ? "UP" : "DOWN"
     );
+
+    setNetworkText("nm-signal-heading", isWifi ? "SIGNAL STRENGTH" : "LINK STATUS");
 
 
     setNetworkText(
@@ -1401,7 +1401,7 @@ function renderNetworkMonitor(
 
     setNetworkText(
         "nm-signal-track-value",
-        `${signal}%`
+        isWifi ? `${signal}%` : network.linkSpeed || "UP"
     );
 
 
@@ -1418,11 +1418,14 @@ function renderNetworkMonitor(
                 0,
                 Math.min(
                     100,
-                    signal
+                    linkValue
                 )
             )}%`;
 
     }
+
+    const signalCaption = document.getElementById("nm-signal-caption");
+    if (signalCaption) signalCaption.hidden = !isWifi;
 
 
     // --------------------------------------------------
@@ -1431,9 +1434,11 @@ function renderNetworkMonitor(
 
     setNetworkText(
         "nm-ssid",
-        network.ssid ||
+        network.networkName || network.ssid ||
         "Unavailable"
     );
+
+    setNetworkText("nm-network-name-label", isWifi ? "SSID" : "Network Profile");
 
 
     setNetworkText(
@@ -1444,8 +1449,10 @@ function renderNetworkMonitor(
 
     setNetworkText(
         "nm-signal-detail",
-        `${signal}%`
+        isWifi ? `${signal}%` : network.linkSpeed || (connected ? "Up" : "Down")
     );
+
+    setNetworkText("nm-signal-detail-label", isWifi ? "Signal Strength" : "Link Speed");
 
 
     setNetworkText(
@@ -1557,14 +1564,16 @@ function renderNetworkMonitor(
 
     setNetworkGauge(
         "nm-signal-gauge",
-        signal
+        linkValue
     );
 
 
     setNetworkText(
         "nm-signal-gauge-value",
-        `${signal}%`
+        isWifi ? `${signal}%` : connected ? "UP" : "DOWN"
     );
+
+    setNetworkText("nm-signal-gauge-heading", isWifi ? "SIGNAL" : "LINK");
 
 
     setNetworkText(
@@ -1670,7 +1679,7 @@ function renderNetworkMonitor(
 
         if (
             internet &&
-            signal >= 60 &&
+            (!isWifi || signal >= 60) &&
             (
                 latency === null ||
                 latency <= 80
@@ -1866,7 +1875,7 @@ if (
 
                 setNetworkText(
                     "nm-status-copy",
-                    "Your device is connected and has internet access."
+                    `Your ${connectionType} connection is active and has internet access.`
                 );
 
             },
@@ -2155,29 +2164,13 @@ function showNetworkDiagnostics() {
             }`
         ],
 
-        [
-            "[SSID]",
-
-            `Network: ${
-                network.ssid ||
-                "Unavailable"
-            }`
-        ],
+        ["[NETWORK]", `Network: ${network.networkName || network.ssid || "Unavailable"}`],
 
         [
-            "[SIGNAL]",
-
-            `Signal strength: ${
-                Number(
-                    network.signal
-                ) || 0
-            }% (${
-                networkSignalQuality(
-                    Number(
-                        network.signal
-                    ) || 0
-                )
-            })`
+            network.connectionType === "Wi-Fi" ? "[SIGNAL]" : "[LINK]",
+            network.connectionType === "Wi-Fi"
+                ? `Signal strength: ${Number(network.signal) || 0}% (${networkSignalQuality(Number(network.signal) || 0)})`
+                : `Link state: ${network.linkState || (network.connected ? "Up" : "Down")} · ${network.linkSpeed || "speed unavailable"}`
         ],
 
         [
@@ -3084,6 +3077,7 @@ function updateNetworkSecurityMonitor(
 
 
         const ssid =
+            network.networkName ||
             network.ssid ||
             "Unavailable";
 
@@ -3153,6 +3147,9 @@ function updateNetworkSecurityMonitor(
 
             }
 
+        }
+        else if (connected) {
+            signalState = `${network.connectionType || "NETWORK"} · ${network.linkSpeed || "LINK UP"}`.toUpperCase();
         }
 
 
@@ -3270,7 +3267,8 @@ function updateNetworkSecurityMonitor(
                 internet,
                 signal,
                 ssid,
-                gateway
+                gateway,
+                connectionType: network.connectionType || "Unknown"
 
             };
 
@@ -3477,14 +3475,13 @@ function updateNetworkSecurityMonitor(
         if (
             connected &&
             previous.connected &&
-            previous.ssid !== ssid &&
-            previous.ssid !== "Unavailable" &&
-            ssid !== "Unavailable"
+            (previous.ssid !== ssid || previous.connectionType !== network.connectionType) &&
+            previous.ssid !== "Unavailable" && ssid !== "Unavailable"
         ) {
 
             addSecurityEvent(
                 "NETWORK",
-                `Active network changed from ${previous.ssid} to ${ssid}.`,
+                `Active network changed from ${previous.connectionType || "network"} (${previous.ssid}) to ${network.connectionType || "network"} (${ssid}).`,
                 "warning",
                 `ssid-change:${previous.ssid}->${ssid}`,
                 SECURITY_EVENT_CHANGE_COOLDOWN
@@ -3607,7 +3604,8 @@ function updateNetworkSecurityMonitor(
             internet,
             signal,
             ssid,
-            gateway
+            gateway,
+            connectionType: network.connectionType || "Unknown"
 
         };
 
@@ -3914,8 +3912,9 @@ function updateSessionStatistics(network) {
     const current = {
         connected: Boolean(network.connected),
         internet: Boolean(network.internet),
-        ssid: network.ssid || "Unavailable",
-        gateway: network.gateway || "Unavailable"
+        ssid: network.networkName || network.ssid || "Unavailable",
+        gateway: network.gateway || "Unavailable",
+        connectionType: network.connectionType || "Unknown"
     };
     const previous = stats.previous;
 
@@ -3943,7 +3942,7 @@ function updateSessionStatistics(network) {
     }
 
     if (previous && previous.connected && current.connected) {
-        if (previous.ssid !== current.ssid && previous.ssid !== "Unavailable" && current.ssid !== "Unavailable") {
+        if ((previous.ssid !== current.ssid || previous.connectionType !== current.connectionType) && previous.ssid !== "Unavailable" && current.ssid !== "Unavailable") {
             stats.networkChanges += 1;
         }
         if (previous.gateway !== current.gateway && previous.gateway !== "Unavailable" && current.gateway !== "Unavailable") {
@@ -3967,6 +3966,7 @@ function updateSessionStatistics(network) {
     document.dispatchEvent(new CustomEvent("cybeck-network-sample", { detail: {
         time: new Date(now).toISOString(), connected: current.connected,
         internet: current.internet, ssid: current.ssid, gateway: current.gateway,
+        connectionType: current.connectionType, adapter: network.adapter || "Unavailable",
         dns: network.dns || "Unavailable", signal: stats.currentSignal,
         eventCount: stats.eventCount, networkOutages: stats.networkOutages,
         internetOutages: stats.internetOutages, activeAlerts: activeSecurityConditions.size
@@ -4822,6 +4822,24 @@ if (
                         updateProgressText.textContent =
                             "100%";
 
+                    }
+
+                    break;
+
+
+                case "installing":
+
+                    if (updateStatus) {
+                        updateStatus.textContent = "INSTALLING AND RESTARTING";
+                    }
+
+                    if (updateMessage) {
+                        updateMessage.textContent = data.message ||
+                            "Installing the update. Cybeck will restart automatically.";
+                    }
+
+                    if (installUpdateButton) {
+                        installUpdateButton.disabled = true;
                     }
 
                     break;

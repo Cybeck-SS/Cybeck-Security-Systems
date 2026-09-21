@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.11</span>
+        <span class="version">v0.1.12</span>
       </div>
     </aside>
 
@@ -156,7 +156,7 @@
               </small>
 
               <div class="network-strength">
-                SIGNAL
+                <span id="network-strength-label">SIGNAL</span>
                 <span id="network-percent">--%</span>
               </div>
 
@@ -434,7 +434,7 @@
               </div>
 
               <div class="network-metric-card">
-                <span>SIGNAL STRENGTH</span>
+                <span id="nm-signal-heading">SIGNAL STRENGTH</span>
                 <div class="network-metric-icon">▥</div>
                 <strong id="nm-signal">--%</strong>
                 <small id="nm-signal-label">Checking</small>
@@ -454,11 +454,11 @@
                 <small id="nm-internet-label">Reachability test</small>
               </div>
 
-              <div class="network-signal-track">
+              <div class="network-signal-track" id="nm-signal-track">
                 <div class="network-signal-fill" id="nm-signal-fill"></div>
                 <span id="nm-signal-track-value">--%</span>
               </div>
-              <div class="network-signal-caption">
+              <div class="network-signal-caption" id="nm-signal-caption">
                 <span>WEAK SIGNAL</span>
                 <span>STABLE CONNECTION</span>
                 <span>STRONG SIGNAL</span>
@@ -478,10 +478,10 @@
               </div>
 
               <div class="network-data-list">
-                <div class="network-data-row"><span>SSID</span><strong id="nm-ssid">--</strong></div>
+                <div class="network-data-row"><span id="nm-network-name-label">SSID</span><strong id="nm-ssid">--</strong></div>
                 <div class="network-data-row"><span>Connection Type</span><strong id="nm-type-detail">--</strong></div>
                 <div class="network-data-row">
-                  <span>Signal Strength</span>
+                  <span id="nm-signal-detail-label">Signal Strength</span>
                   <strong id="nm-signal-detail">--%</strong>
                 </div>
                 <div class="network-data-row">
@@ -546,7 +546,7 @@
                   <div class="network-gauge-ring" id="nm-signal-gauge" style="--value:0">
                     <strong id="nm-signal-gauge-value">--%</strong>
                   </div>
-                  <span>SIGNAL</span>
+                  <span id="nm-signal-gauge-heading">SIGNAL</span>
                   <small id="nm-signal-gauge-label">Checking</small>
                 </div>
 
@@ -1025,7 +1025,7 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.11</span>
+  Version <span id="release-version">0.1.12</span>
 </h3>
 
 <ul class="release-notes">
