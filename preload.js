@@ -76,6 +76,7 @@ contextBridge.exposeInMainWorld(
         importNoteFile: () => ipcRenderer.invoke("import-note-file"),
         getVaultSession: () => ipcRenderer.invoke("get-vault-session"),
         createVaultProfile: (profile) => ipcRenderer.invoke("create-vault-profile", profile),
+        deleteVaultProfile: (profileId, password) => ipcRenderer.invoke("delete-vault-profile", profileId, password),
         unlockVault: (profileId, password) => ipcRenderer.invoke("unlock-vault", profileId, password),
         lockVault: () => ipcRenderer.invoke("lock-vault"),
         onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),

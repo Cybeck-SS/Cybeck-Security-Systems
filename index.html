@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.14</span>
+        <span class="version">v0.1.15</span>
       </div>
     </aside>
 
@@ -301,13 +301,13 @@
         <div class="vault-shell">
           <section class="vault-brand-panel" aria-label="Cybeck Vault identity">
             <div class="vault-brand-header"><img src="assets/logo.png" alt=""><strong>CYBECK SECURITY SYSTEMS</strong></div>
-            <div class="vault-brand-copy"><div class="vault-values" aria-hidden="true"><span>PEOPLE</span><span>DATA</span><span>IDEAS</span><span>SAFER</span><span>TOGETHER</span></div><div class="vault-mark"><img src="assets/logo.png" alt="Cybeck Security Systems company logo"></div><h2><em>VAULT</em> ACCESS</h2><p>Your protected digital vault.</p></div>
+            <div class="vault-brand-copy"><div class="vault-mark"><img src="assets/logo.png" alt="Cybeck Security Systems company logo"></div><h2><em>VAULT</em> ACCESS</h2><p>Your protected digital vault.</p></div>
             <div class="vault-preview-label">LOGIN CONCEPT · SECURE LOCAL ACCESS</div>
           </section>
           <section class="vault-login-panel">
             <div id="vault-locked-view">
               <span class="eyebrow">VAULT ACCESS</span><h2>Welcome back</h2><p class="vault-subtitle">Choose your profile and unlock this session.</p>
-              <div class="vault-profile-grid"><div id="vault-profile-list" class="vault-profiles" role="list"></div><button type="button" id="vault-add-profile" class="vault-profile vault-add"><span class="vault-avatar">＋</span><span><strong>Add profile</strong><small>Set up later</small></span></button></div>
+              <div class="vault-profile-picker"><label for="vault-profile-select">PROFILE<select id="vault-profile-select" aria-label="Vault profile"></select></label><div class="vault-profile-actions"><button type="button" id="vault-add-profile">＋ Create profile</button><button type="button" id="vault-delete-profile">Delete selected</button></div></div>
               <form id="vault-unlock-form" class="vault-auth-form" hidden><label>PROFILE PASSWORD<div class="vault-password"><input id="vault-password" type="password" maxlength="256" autocomplete="current-password" required><button type="button" id="vault-show-password" aria-label="Show or hide password">◉</button></div></label><button type="submit" class="vault-unlock-button">▣ &nbsp; UNLOCK VAULT</button></form>
               <form id="vault-create-form" class="vault-auth-form" hidden><div class="vault-form-row"><label>PROFILE NAME<input id="vault-profile-name" maxlength="48" autocomplete="off" required placeholder="Primary Profile"></label><label>ROLE<input id="vault-profile-role" maxlength="48" autocomplete="off" placeholder="Administrator"></label></div><label>NEW PASSWORD<div class="vault-password"><input id="vault-new-password" type="password" minlength="10" maxlength="256" autocomplete="new-password" required><button type="button" data-vault-reveal="vault-new-password" aria-label="Show or hide new password">◉</button></div></label><label>CONFIRM PASSWORD<input id="vault-confirm-password" type="password" minlength="10" maxlength="256" autocomplete="new-password" required></label><div class="vault-form-actions"><button type="submit" class="vault-unlock-button">CREATE PROFILE</button><button type="button" id="vault-cancel-profile">Cancel</button></div></form>
               <p id="vault-status" class="vault-status" role="status" aria-live="polite"></p>
@@ -1037,14 +1037,14 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.14</span>
+  Version <span id="release-version">0.1.15</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Matches the approved two-panel Vault login composition.</li>
-  <li>Uses the official Cybeck company logo in the Vault artwork.</li>
-  <li>Keeps the login panel visible and responsive on narrower Windows displays.</li>
-  <li>Refreshes the complete in-app release history through v0.1.14.</li>
+  <li>Replaces crowded Vault profile cards with a compact dropdown.</li>
+  <li>Adds password-confirmed profile deletion for removing duplicates.</li>
+  <li>Removes decorative Vault wording that had no application function.</li>
+  <li>Refreshes the complete in-app release history through v0.1.15.</li>
 </ul>
 
       </article>
@@ -1059,6 +1059,7 @@
         RELEASE HISTORY
       </div>
 
+      <div class="release-entry"><div class="release-version">v0.1.15</div><div class="release-description"><strong>Vault Profile Management</strong><span>Compact profile dropdown, password-confirmed profile deletion, duplicate cleanup, and removal of nonfunctional decorative wording.</span></div><div class="release-date">24 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.14</div><div class="release-description"><strong>Vault Visual Alignment</strong><span>Approved split login layout, official Cybeck logo, visible authentication panel, responsive profile cards, and refreshed release records.</span></div><div class="release-date">24 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.13</div><div class="release-description"><strong>Vault Profiles and Workflow</strong><span>Protected local Vault profiles, newest-first connections, grouped incidents, fluid urgency cycle, and Notepad-compatible note history.</span></div><div class="release-date">21 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.12</div><div class="release-description"><strong>Updater and Active Network Fixes</strong><span>Reliable restart after updates, Ethernet and Wi-Fi route detection, TCP reachability, and application-wide layout improvements.</span></div><div class="release-date">21 SEP 2026</div></div>

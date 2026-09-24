@@ -254,6 +254,20 @@ ipcMain.handle("create-vault-profile", async (event, supplied) => {
     } catch (error) { return { error: error.message }; }
 });
 
+ipcMain.handle("delete-vault-profile", async (event, profileId, password) => {
+    if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    try {
+        const store = await loadVaultStore();
+        const profile = store.profiles.find((item) => item.id === profileId);
+        if (!profile || !verifyPassword(profile, password)) return { error: "The selected profile password was not recognized." };
+        store.profiles = store.profiles.filter((item) => item.id !== profileId);
+        await saveVaultStore(store);
+        if (unlockedVaultProfileId === profileId) unlockedVaultProfileId = null;
+        vaultFailures.delete(profileId);
+        return { deleted: true, profiles: store.profiles.map(publicProfile) };
+    } catch (error) { return { error: error.message }; }
+});
+
 ipcMain.handle("unlock-vault", async (event, profileId, password) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
     const now = Date.now();

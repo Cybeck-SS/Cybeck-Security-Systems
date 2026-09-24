@@ -15,21 +15,18 @@
     }
 
     function renderProfiles() {
-        const list = get("vault-profile-list");
-        list.replaceChildren();
+        const select = get("vault-profile-select");
+        select.replaceChildren();
         for (const profile of profiles) {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = `vault-profile${selectedProfileId === profile.id ? " active" : ""}`;
-            button.dataset.profileId = profile.id;
-            const avatar = document.createElement("span"); avatar.className = "vault-avatar"; avatar.textContent = initials(profile.name);
-            const copy = document.createElement("span");
-            const name = document.createElement("strong"); name.textContent = profile.name;
-            const role = document.createElement("small"); role.textContent = profile.role;
-            copy.append(name, role); button.append(avatar, copy);
-            button.addEventListener("click", () => { selectedProfileId = profile.id; get("vault-unlock-form").hidden = false; get("vault-create-form").hidden = true; renderProfiles(); get("vault-password").focus(); status(""); });
-            list.append(button);
+            const option = document.createElement("option");
+            option.value = profile.id;
+            option.textContent = `${profile.name} · ${profile.role}`;
+            option.selected = selectedProfileId === profile.id;
+            select.append(option);
         }
+        if (!profiles.length) { const option = document.createElement("option"); option.textContent = "No profiles created"; option.value = ""; select.append(option); }
+        select.disabled = !profiles.length;
+        get("vault-delete-profile").disabled = !selectedProfileId;
         get("vault-unlock-form").hidden = !selectedProfileId;
     }
 
@@ -54,6 +51,23 @@
     }
 
     get("vault-add-profile").addEventListener("click", () => { get("vault-create-form").hidden = false; get("vault-unlock-form").hidden = true; get("vault-profile-name").focus(); status("Passwords require at least 10 characters."); });
+    get("vault-profile-select").addEventListener("change", (event) => { selectedProfileId = event.target.value || null; get("vault-create-form").hidden = true; renderProfiles(); get("vault-password").focus(); status(""); });
+    get("vault-delete-profile").addEventListener("click", async () => {
+        const profile = profiles.find((item) => item.id === selectedProfileId);
+        if (!profile) return;
+        const password = get("vault-password").value;
+        if (!password) { status("Enter the selected profile password before deleting it.", true); get("vault-password").focus(); return; }
+        if (!window.confirm(`Permanently delete the Vault profile “${profile.name}”?`)) return;
+        status("Deleting protected profile…");
+        const result = await bridge.deleteVaultProfile(profile.id, password);
+        if (result.error) { status(result.error, true); get("vault-password").select(); return; }
+        profiles = result.profiles || [];
+        selectedProfileId = profiles[0]?.id || null;
+        get("vault-password").value = "";
+        renderProfiles();
+        if (!profiles.length) { get("vault-create-form").hidden = false; get("vault-unlock-form").hidden = true; }
+        status("Profile deleted.");
+    });
     get("vault-cancel-profile").addEventListener("click", () => { get("vault-create-form").reset(); get("vault-create-form").hidden = true; get("vault-unlock-form").hidden = !selectedProfileId; status(""); });
     get("vault-unlock-form").addEventListener("submit", async (event) => {
         event.preventDefault(); status("Checking profile…");
