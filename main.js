@@ -1524,7 +1524,7 @@ ipcMain.handle("get-app-info", async () => {
     return {
         productName: "Cybeck Security Systems",
         version: app.getVersion(),
-        buildDate: "21 September 2026",
+        buildDate: "24 September 2026",
         releaseChannel: "Stable"
     };
 

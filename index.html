@@ -72,7 +72,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.12</span>
+        <span class="version">v0.1.14</span>
       </div>
     </aside>
 
@@ -300,14 +300,14 @@
       <section id="vault" class="page">
         <div class="vault-shell">
           <section class="vault-brand-panel" aria-label="Cybeck Vault identity">
-            <div><span class="eyebrow">PERSONAL SECURITY WORKSPACE</span><div class="vault-mark" aria-hidden="true"><span></span></div><h2>VAULT <em>ACCESS</em></h2><p>Your protected digital vault.</p></div>
-            <div class="vault-trust"><span>Local profiles</span><span>Windows protected</span><span>Session locked</span></div>
+            <div class="vault-brand-header"><img src="assets/logo.png" alt=""><strong>CYBECK SECURITY SYSTEMS</strong></div>
+            <div class="vault-brand-copy"><div class="vault-values" aria-hidden="true"><span>PEOPLE</span><span>DATA</span><span>IDEAS</span><span>SAFER</span><span>TOGETHER</span></div><div class="vault-mark"><img src="assets/logo.png" alt="Cybeck Security Systems company logo"></div><h2><em>VAULT</em> ACCESS</h2><p>Your protected digital vault.</p></div>
+            <div class="vault-preview-label">LOGIN CONCEPT · SECURE LOCAL ACCESS</div>
           </section>
           <section class="vault-login-panel">
             <div id="vault-locked-view">
               <span class="eyebrow">VAULT ACCESS</span><h2>Welcome back</h2><p class="vault-subtitle">Choose your profile and unlock this session.</p>
-              <div id="vault-profile-list" class="vault-profiles" role="list"></div>
-              <button type="button" id="vault-add-profile" class="vault-profile vault-add"><span class="vault-avatar">＋</span><span><strong>Add profile</strong><small>Protected local user</small></span></button>
+              <div class="vault-profile-grid"><div id="vault-profile-list" class="vault-profiles" role="list"></div><button type="button" id="vault-add-profile" class="vault-profile vault-add"><span class="vault-avatar">＋</span><span><strong>Add profile</strong><small>Set up later</small></span></button></div>
               <form id="vault-unlock-form" class="vault-auth-form" hidden><label>PROFILE PASSWORD<div class="vault-password"><input id="vault-password" type="password" maxlength="256" autocomplete="current-password" required><button type="button" id="vault-show-password" aria-label="Show or hide password">◉</button></div></label><button type="submit" class="vault-unlock-button">▣ &nbsp; UNLOCK VAULT</button></form>
               <form id="vault-create-form" class="vault-auth-form" hidden><div class="vault-form-row"><label>PROFILE NAME<input id="vault-profile-name" maxlength="48" autocomplete="off" required placeholder="Primary Profile"></label><label>ROLE<input id="vault-profile-role" maxlength="48" autocomplete="off" placeholder="Administrator"></label></div><label>NEW PASSWORD<div class="vault-password"><input id="vault-new-password" type="password" minlength="10" maxlength="256" autocomplete="new-password" required><button type="button" data-vault-reveal="vault-new-password" aria-label="Show or hide new password">◉</button></div></label><label>CONFIRM PASSWORD<input id="vault-confirm-password" type="password" minlength="10" maxlength="256" autocomplete="new-password" required></label><div class="vault-form-actions"><button type="submit" class="vault-unlock-button">CREATE PROFILE</button><button type="button" id="vault-cancel-profile">Cancel</button></div></form>
               <p id="vault-status" class="vault-status" role="status" aria-live="polite"></p>
@@ -1037,38 +1037,15 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.12</span>
+  Version <span id="release-version">0.1.14</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Detects signed portable AnyDesk in Downloads.</li>
-  <li>Launches AnyDesk directly without a Windows URL handler.</li>
-  <li>Adds a picker for AnyDesk executables in other locations.</li>
+  <li>Matches the approved two-panel Vault login composition.</li>
+  <li>Uses the official Cybeck company logo in the Vault artwork.</li>
+  <li>Keeps the login panel visible and responsive on narrower Windows displays.</li>
+  <li>Refreshes the complete in-app release history through v0.1.14.</li>
 </ul>
-
-        <ul class="release-notes">
-
-          <li>
-            Introduced Cybeck Security Systems branding.
-          </li>
-
-          <li>
-            Added fullscreen and windowed display support.
-          </li>
-
-          <li>
-            Added live Wi-Fi signal strength monitoring.
-          </li>
-
-          <li>
-            Added application system-check console.
-          </li>
-
-          <li>
-            Added application information and release tracking.
-          </li>
-
-        </ul>
 
       </article>
 
@@ -1082,30 +1059,22 @@
         RELEASE HISTORY
       </div>
 
-      <div class="release-entry">
-
-        <div class="release-version">
-          v0.1.0
-        </div>
-
-        <div class="release-description">
-
-          <strong>
-            Initial Cybeck Foundation
-          </strong>
-
-          <span>
-            Core dashboard, window controls, live network monitoring
-            and application identity established.
-          </span>
-
-        </div>
-
-        <div class="release-date">
-          25 AUG 2026
-        </div>
-
-      </div>
+      <div class="release-entry"><div class="release-version">v0.1.14</div><div class="release-description"><strong>Vault Visual Alignment</strong><span>Approved split login layout, official Cybeck logo, visible authentication panel, responsive profile cards, and refreshed release records.</span></div><div class="release-date">24 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.13</div><div class="release-description"><strong>Vault Profiles and Workflow</strong><span>Protected local Vault profiles, newest-first connections, grouped incidents, fluid urgency cycle, and Notepad-compatible note history.</span></div><div class="release-date">21 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.12</div><div class="release-description"><strong>Updater and Active Network Fixes</strong><span>Reliable restart after updates, Ethernet and Wi-Fi route detection, TCP reachability, and application-wide layout improvements.</span></div><div class="release-date">21 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.11</div><div class="release-description"><strong>Tasks and Notes</strong><span>Editable work items, urgency categories, encrypted local storage, JSON transfer, and AnyDesk session close control.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.10</div><div class="release-description"><strong>AnyDesk Detection</strong><span>Signed executable discovery, portable copy support, direct launching, and manual executable selection.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.9</div><div class="release-description"><strong>AnyDesk Bridge</strong><span>Remote Systems AnyDesk launcher with validated IDs and access to the official independent download.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.8</div><div class="release-description"><strong>Windows Home Assistance</strong><span>Remote Desktop reachability checks, Windows Home guidance, Quick Assist launch, and Cybeck Connect planning.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.7</div><div class="release-description"><strong>Remote Systems</strong><span>Collapsible monitoring panels, SSH resource checks and commands, remote target sessions, and Remote Desktop launching.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.6</div><div class="release-description"><strong>Session Command Access</strong><span>One-time CMD and PowerShell approval per app session, visible access state, and revoke controls.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.5</div><div class="release-description"><strong>Operations Consoles</strong><span>Integrated CMD and PowerShell with streamed output, stop and clear controls, and bounded command execution.</span></div><div class="release-date">20 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.4</div><div class="release-description"><strong>Windows Distribution Safeguards</strong><span>Signing availability checks and documented Windows compatibility and trusted release requirements.</span></div><div class="release-date">19 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.3</div><div class="release-description"><strong>Monitoring Phases 1–7</strong><span>Session statistics, event filters, incidents, reports, encrypted history, Operations dashboard, and confirmed firewall actions.</span></div><div class="release-date">19 SEP 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.2.1</div><div class="release-description"><strong>Foundation Maintenance</strong><span>Early packaging and application foundation maintenance.</span></div><div class="release-date">25 AUG 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.2</div><div class="release-description"><strong>Network Monitor Foundation</strong><span>Early network status, diagnostics, dashboard, and Windows application packaging work.</span></div><div class="release-date">25 AUG 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.1</div><div class="release-description"><strong>Interface Foundation</strong><span>Initial interface refinements and application identity work.</span></div><div class="release-date">25 AUG 2026</div></div>
+      <div class="release-entry"><div class="release-version">v0.1.0</div><div class="release-description"><strong>Initial Cybeck Foundation</strong><span>Core dashboard, window controls, live network monitoring, and application identity established.</span></div><div class="release-date">25 AUG 2026</div></div>
 
     </article>
 
