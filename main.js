@@ -1622,7 +1622,7 @@ ipcMain.handle("get-app-info", async () => {
         productName: "Cybeck Security Systems",
         version: app.getVersion(),
         buildDate: "24 September 2026",
-        releaseChannel: "Stable"
+        releaseChannel: process.env.CYBECK_TEST_MODE === "1" ? "Local Test Mode" : "Stable"
     };
 
 });
