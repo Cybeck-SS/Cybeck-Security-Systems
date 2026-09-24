@@ -185,12 +185,19 @@
         reset("task"); reset("note");
     }));
 
-    bridge.loadWorkItems().then((result) => {
-        if (result.error) { announce(result.error); return; }
-        Object.assign(state, result);
-        ready = true;
-        announce("Saved locally with Windows encryption. Export JSON to move data to a cloud drive later.");
-        renderTasks(); renderNotes();
-    }).catch((error) => announce(`Work items could not be loaded: ${error.message}`));
+    function loadProfileItems() {
+        ready = false;
+        state.tasks = [];
+        state.notes = [];
+        bridge.loadWorkItems().then((result) => {
+            if (result.error) { announce(result.error); return; }
+            Object.assign(state, result);
+            ready = true;
+            announce(`Signed in as ${window.cybeckActiveProfile?.name || "profile"}. Tasks and Notes are encrypted and isolated to this profile.`);
+            renderTasks(); renderNotes();
+        }).catch((error) => announce(`Work items could not be loaded: ${error.message}`));
+    }
+    if (window.cybeckProfileReady) loadProfileItems();
+    else window.addEventListener("cybeck-profile-ready", loadProfileItems, { once: true });
     renderCycle();
 })();

@@ -4075,6 +4075,31 @@ if (networkDiagnosticsButton) {
 
 }
 
+const networkRepairButtons = [...document.querySelectorAll("[data-network-repair]")];
+const networkRepairStatus = document.getElementById("network-repair-status");
+for (const button of networkRepairButtons) {
+    button.addEventListener("click", async () => {
+        networkRepairButtons.forEach((item) => { item.disabled = true; });
+        networkRepairStatus.className = "network-repair-status";
+        networkRepairStatus.textContent = `Preparing ${button.querySelector("strong")?.textContent || "network repair"}…`;
+        try {
+            const result = await window.windowControls.runNetworkRepair(button.dataset.networkRepair);
+            if (result.success) {
+                networkRepairStatus.classList.add("success");
+                networkRepairStatus.textContent = result.message;
+                setTimeout(() => updateNetworkStatus(), result.restartRequired ? 1000 : 5000);
+            } else if (result.canceled) networkRepairStatus.textContent = "Network repair canceled.";
+            else {
+                networkRepairStatus.classList.add("error");
+                networkRepairStatus.textContent = result.error || "Network repair failed.";
+            }
+        } catch (error) {
+            networkRepairStatus.classList.add("error");
+            networkRepairStatus.textContent = `Network repair failed: ${error.message}`;
+        } finally { networkRepairButtons.forEach((item) => { item.disabled = false; }); }
+    });
+}
+
 const viewNetworkDetailsButton =
     document.getElementById(
         "nm-view-details"

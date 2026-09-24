@@ -4,6 +4,7 @@ const { pathToFileURL } = require("url");
 const os = require("os");
 const dns = require("dns").promises;
 const fs = require("fs/promises");
+const { constants: fsSyncConstants } = require("fs");
 const { promisify } = require("util");
 const { exec, execFile, spawn } = require("child_process");
 const { autoUpdater } = require("electron-updater");
@@ -19,11 +20,15 @@ const { renderNoteFile, parseNoteFile, noteFileName, historyFileName, noteFolder
 const { createProfile, verifyPassword, publicProfile, normalizeVaultProfiles } = require("./vault-auth");
 const { installDownloadedUpdate } = require("./updater-install");
 const { chooseActiveAdapter } = require("./network-adapter");
+const { networkRepairSpec } = require("./network-repair");
 
 const execFileAsync = promisify(execFile);
-const historyPath = () => path.join(app.getPath("userData"), "security-history.json");
-const workItemsPath = () => path.join(app.getPath("userData"), "work-items.json");
-const notesFolderPath = () => noteFolder(app.getPath("documents"));
+const legacyHistoryPath = () => path.join(app.getPath("userData"), "security-history.json");
+const legacyWorkItemsPath = () => path.join(app.getPath("userData"), "work-items.json");
+const profileRoot = (profileId) => path.join(app.getPath("userData"), "profiles", profileId);
+const historyPath = (profileId) => path.join(profileRoot(profileId), "security-history.json");
+const workItemsPath = (profileId) => path.join(profileRoot(profileId), "work-items.json");
+const notesFolderPath = (profileId) => path.join(app.getPath("documents"), "Cybeck Security Systems", "Profiles", profileId, "Notes");
 const vaultProfilesPath = () => path.join(app.getPath("userData"), "vault-profiles.json");
 let unlockedVaultProfileId = null;
 const vaultFailures = new Map();
@@ -49,8 +54,24 @@ async function saveVaultStore(store) {
     await fs.rename(temporary, destination);
 }
 
-async function syncReadableNotes(notes) {
-    const root = notesFolderPath();
+async function migrateLegacyProfileData(profileId, firstProfileId) {
+    if (!profileId || profileId !== firstProfileId) return;
+    const root = profileRoot(profileId);
+    const marker = path.join(root, ".legacy-data-checked");
+    try { await fs.access(marker); return; } catch {}
+    await fs.mkdir(root, { recursive: true });
+    for (const [source, destination] of [[legacyHistoryPath(), historyPath(profileId)], [legacyWorkItemsPath(), workItemsPath(profileId)]]) {
+        try { await fs.copyFile(source, destination, fsSyncConstants.COPYFILE_EXCL); }
+        catch (error) { if (!['ENOENT', 'EEXIST'].includes(error.code)) throw error; }
+    }
+    const legacyNotes = noteFolder(app.getPath("documents"));
+    try { await fs.cp(legacyNotes, notesFolderPath(profileId), { recursive: true, errorOnExist: false }); }
+    catch (error) { if (error.code !== "ENOENT") throw error; }
+    await fs.writeFile(marker, new Date().toISOString(), "utf8");
+}
+
+async function syncReadableNotes(notes, profileId) {
+    const root = notesFolderPath(profileId);
     const current = path.join(root, "Current");
     const history = path.join(root, "History");
     await fs.mkdir(current, { recursive: true });
@@ -78,7 +99,18 @@ async function syncReadableNotes(notes) {
     }
     return root;
 }
+
+async function removeProfileData(profileId) {
+    const dataBase = path.resolve(app.getPath("userData"), "profiles");
+    const notesBase = path.resolve(app.getPath("documents"), "Cybeck Security Systems", "Profiles");
+    const dataTarget = path.resolve(dataBase, profileId);
+    const notesTarget = path.resolve(notesBase, profileId);
+    if (!dataTarget.startsWith(`${dataBase}${path.sep}`) || !notesTarget.startsWith(`${notesBase}${path.sep}`)) throw new Error("Invalid profile data path.");
+    await fs.rm(dataTarget, { recursive: true, force: true });
+    await fs.rm(notesTarget, { recursive: true, force: true });
+}
 let previousConnectionScan = null;
+let networkRepairRunning = false;
 
 ipcMain.handle("get-connection-attempts", async () => {
     if (process.platform !== "win32") return [];
@@ -127,9 +159,10 @@ ipcMain.handle("get-active-connections", async () => {
     }
 });
 
-ipcMain.handle("load-security-history", async () => {
+ipcMain.handle("load-security-history", async (event) => {
+    if (!isLocalOperationsWindow(event) || !unlockedVaultProfileId) return { error: "Sign in to load profile monitoring history." };
     try {
-        const stored = JSON.parse(await fs.readFile(historyPath(), "utf8"));
+        const stored = JSON.parse(await fs.readFile(historyPath(unlockedVaultProfileId), "utf8"));
         if (!stored.encrypted) return stored; // Migrate earlier local history on the next save.
         return JSON.parse(safeStorage.decryptString(Buffer.from(stored.data, "base64")));
     }
@@ -139,14 +172,15 @@ ipcMain.handle("load-security-history", async () => {
     }
 });
 
-ipcMain.handle("save-security-history", async (_event, supplied) => {
+ipcMain.handle("save-security-history", async (event, supplied) => {
+    if (!isLocalOperationsWindow(event) || !unlockedVaultProfileId) return false;
     if (!supplied || typeof supplied !== "object") return false;
     const safe = {
         days: Object.fromEntries(Object.entries(supplied.days || {}).slice(-31)),
         incidents: Array.isArray(supplied.incidents) ? supplied.incidents.slice(-200) : [],
         events: Array.isArray(supplied.events) ? supplied.events.slice(-500) : []
     };
-    const destination = historyPath();
+    const destination = historyPath(unlockedVaultProfileId);
     const temporary = `${destination}.${process.pid}.${Date.now()}.tmp`;
     try {
         if (!safeStorage.isEncryptionAvailable()) return false;
@@ -163,8 +197,9 @@ ipcMain.handle("save-security-history", async (_event, supplied) => {
 
 ipcMain.handle("load-work-items", async (event) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { error: "Sign in to load profile Tasks and Notes." };
     try {
-        const stored = JSON.parse(await fs.readFile(workItemsPath(), "utf8"));
+        const stored = JSON.parse(await fs.readFile(workItemsPath(unlockedVaultProfileId), "utf8"));
         if (!stored.encrypted) throw new Error("Unencrypted work items file rejected.");
         return normalizeWorkItems(JSON.parse(safeStorage.decryptString(Buffer.from(stored.data, "base64"))));
     } catch (error) {
@@ -174,22 +209,25 @@ ipcMain.handle("load-work-items", async (event) => {
 
 ipcMain.handle("save-work-items", async (event, supplied) => {
     if (!isLocalOperationsWindow(event)) return { saved: false, error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { saved: false, error: "Sign in to save profile Tasks and Notes." };
     try {
         if (!safeStorage.isEncryptionAvailable()) throw new Error("Windows encryption is unavailable.");
         const data = normalizeWorkItems(supplied);
-        const destination = workItemsPath();
+        const profileId = unlockedVaultProfileId;
+        const destination = workItemsPath(profileId);
         const temporary = `${destination}.${process.pid}.${Date.now()}.tmp`;
         const encrypted = safeStorage.encryptString(JSON.stringify(data));
         await fs.mkdir(path.dirname(destination), { recursive: true });
         await fs.writeFile(temporary, JSON.stringify({ encrypted: true, data: encrypted.toString("base64") }), "utf8");
         await fs.rename(temporary, destination);
-        const notesFolder = await syncReadableNotes(data.notes);
+        const notesFolder = await syncReadableNotes(data.notes, profileId);
         return { saved: true, data, notesFolder };
     } catch (error) { return { saved: false, error: error.message }; }
 });
 
 ipcMain.handle("export-work-items", async (event, supplied) => {
     if (!isLocalOperationsWindow(event)) return { saved: false, error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { saved: false, error: "Sign in before exporting profile data." };
     try {
         const data = normalizeWorkItems(supplied);
         const result = await dialog.showSaveDialog(mainWindow, { title: "Export Tasks and Notes", defaultPath: "cybeck-work-items.json", filters: [{ name: "JSON", extensions: ["json"] }] });
@@ -201,6 +239,7 @@ ipcMain.handle("export-work-items", async (event, supplied) => {
 
 ipcMain.handle("import-work-items", async (event) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { error: "Sign in before importing profile data." };
     try {
         const result = await dialog.showOpenDialog(mainWindow, { title: "Import Tasks and Notes", properties: ["openFile"], filters: [{ name: "JSON", extensions: ["json"] }] });
         if (result.canceled || !result.filePaths.length) return { canceled: true };
@@ -212,8 +251,9 @@ ipcMain.handle("import-work-items", async (event) => {
 
 ipcMain.handle("open-notes-folder", async (event) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { error: "Sign in to open the profile Notes folder." };
     try {
-        const folder = notesFolderPath();
+        const folder = notesFolderPath(unlockedVaultProfileId);
         await fs.mkdir(path.join(folder, "Current"), { recursive: true });
         await fs.mkdir(path.join(folder, "History"), { recursive: true });
         const error = await shell.openPath(folder);
@@ -223,8 +263,9 @@ ipcMain.handle("open-notes-folder", async (event) => {
 
 ipcMain.handle("import-note-file", async (event) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    if (!unlockedVaultProfileId) return { error: "Sign in before restoring a profile Note." };
     try {
-        const result = await dialog.showOpenDialog(mainWindow, { title: "Restore a Cybeck Note", defaultPath: path.join(notesFolderPath(), "Current"), properties: ["openFile"], filters: [{ name: "Cybeck Notes", extensions: ["txt"] }] });
+        const result = await dialog.showOpenDialog(mainWindow, { title: "Restore a Cybeck Note", defaultPath: path.join(notesFolderPath(unlockedVaultProfileId), "Current"), properties: ["openFile"], filters: [{ name: "Cybeck Notes", extensions: ["txt"] }] });
         if (result.canceled || !result.filePaths.length) return { canceled: true };
         const file = await fs.readFile(result.filePaths[0], "utf8");
         if (file.length > 1024 * 1024) throw new Error("Note exceeds 1 MB limit.");
@@ -249,12 +290,13 @@ ipcMain.handle("create-vault-profile", async (event, supplied) => {
         const profile = createProfile(supplied?.name, supplied?.role, supplied?.password);
         store.profiles.push(profile);
         await saveVaultStore(store);
+        await migrateLegacyProfileData(profile.id, store.profiles[0]?.id).catch((error) => console.error("[PROFILE] Legacy data migration failed:", error));
         unlockedVaultProfileId = profile.id;
         return { created: true, profile: publicProfile(profile), unlockedProfileId: profile.id };
     } catch (error) { return { error: error.message }; }
 });
 
-ipcMain.handle("delete-vault-profile", async (event, profileId, password) => {
+ipcMain.handle("delete-vault-profile", async (event, profileId, password, deleteData = false) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
     try {
         const store = await loadVaultStore();
@@ -262,6 +304,7 @@ ipcMain.handle("delete-vault-profile", async (event, profileId, password) => {
         if (!profile || !verifyPassword(profile, password)) return { error: "The selected profile password was not recognized." };
         store.profiles = store.profiles.filter((item) => item.id !== profileId);
         await saveVaultStore(store);
+        if (deleteData) await removeProfileData(profileId);
         if (unlockedVaultProfileId === profileId) unlockedVaultProfileId = null;
         vaultFailures.delete(profileId);
         return { deleted: true, profiles: store.profiles.map(publicProfile) };
@@ -284,17 +327,23 @@ ipcMain.handle("unlock-vault", async (event, profileId, password) => {
         }
         vaultFailures.delete(profileId);
         unlockedVaultProfileId = profile.id;
+        await migrateLegacyProfileData(profile.id, store.profiles[0]?.id).catch((error) => console.error("[PROFILE] Legacy data migration failed:", error));
         return { unlocked: true, profile: publicProfile(profile) };
     } catch (error) { return { error: error.message }; }
 });
 
 ipcMain.handle("lock-vault", (event) => {
     if (!isLocalOperationsWindow(event)) return { error: "Local Cybeck window required." };
+    operationsAccess.revoke();
+    activeOperationsCommand?.stop();
+    activeRemoteCommand?.stop();
+    remoteTarget = null;
     unlockedVaultProfileId = null;
     return { locked: true };
 });
 
-ipcMain.handle("export-incident-report", async (_event, report) => {
+ipcMain.handle("export-incident-report", async (event, report) => {
+    if (!isAuthenticatedLocalWindow(event)) return { success: false, error: "Sign in required." };
     if (!report || typeof report !== "object" || !/^CYB-\d{5}$/.test(report.id || "")) return { success: false };
     const result = await dialog.showSaveDialog(mainWindow, {
         title: `Export ${report.id} report`,
@@ -317,7 +366,8 @@ ipcMain.handle("export-incident-report", async (_event, report) => {
     } catch (error) { return { success: false, error: error.message }; }
 });
 
-ipcMain.handle("block-incident-ip", async (_event, incidentId, remoteAddress) => {
+ipcMain.handle("block-incident-ip", async (event, incidentId, remoteAddress) => {
+    if (!isAuthenticatedLocalWindow(event)) return { success: false, error: "Sign in required." };
     const target = firewallTarget(incidentId, remoteAddress);
     if (!target) return { success: false, error: "This incident has no blockable remote IP address." };
     const confirmation = await dialog.showMessageBox(mainWindow, {
@@ -339,7 +389,8 @@ ipcMain.handle("block-incident-ip", async (_event, incidentId, remoteAddress) =>
     } catch (error) { return { success: false, error: `Firewall block failed: ${error.message}` }; }
 });
 
-ipcMain.handle("remove-incident-block", async (_event, incidentId, remoteAddress) => {
+ipcMain.handle("remove-incident-block", async (event, incidentId, remoteAddress) => {
+    if (!isAuthenticatedLocalWindow(event)) return { success: false, error: "Sign in required." };
     const target = firewallTarget(incidentId, remoteAddress);
     if (!target) return { success: false, error: "Invalid incident or remote IP address." };
     const confirmation = await dialog.showMessageBox(mainWindow, {
@@ -363,7 +414,8 @@ ipcMain.handle("remove-incident-block", async (_event, incidentId, remoteAddress
     } catch (error) { return { success: false, error: `Removing the block failed: ${error.message}` }; }
 });
 
-ipcMain.handle("get-incident-block-status", async (_event, incidentId, remoteAddress) => {
+ipcMain.handle("get-incident-block-status", async (event, incidentId, remoteAddress) => {
+    if (!isAuthenticatedLocalWindow(event)) return false;
     const target = firewallTarget(incidentId, remoteAddress);
     if (!target) return false;
     const command = `$rule = Get-NetFirewallRule -Name '${target.name}' -ErrorAction SilentlyContinue; ` +
@@ -391,11 +443,15 @@ function isLocalOperationsWindow(event) {
         event.sender.getURL() === pathToFileURL(path.join(__dirname, "index.html")).href;
 }
 
+function isAuthenticatedLocalWindow(event) {
+    return Boolean(isLocalOperationsWindow(event) && unlockedVaultProfileId);
+}
+
 ipcMain.handle("get-operations-access", (event) =>
-    Boolean(isLocalOperationsWindow(event) && operationsAccess.isGranted()));
+    Boolean(isAuthenticatedLocalWindow(event) && operationsAccess.isGranted()));
 
 ipcMain.handle("request-operations-access", async (event) => {
-    if (!isLocalOperationsWindow(event)) return false;
+    if (!isAuthenticatedLocalWindow(event)) return false;
     const window = mainWindow;
     return operationsAccess.request(async () => {
         const approval = await dialog.showMessageBox(window, {
@@ -409,14 +465,14 @@ ipcMain.handle("request-operations-access", async (event) => {
 });
 
 ipcMain.handle("revoke-operations-access", (event) => {
-    if (!isLocalOperationsWindow(event)) return false;
+    if (!isAuthenticatedLocalWindow(event)) return false;
     operationsAccess.revoke();
     activeOperationsCommand?.stop();
     return true;
 });
 
 ipcMain.handle("run-operations-command", async (event, shell, command) => {
-    if (!isLocalOperationsWindow(event)) {
+    if (!isAuthenticatedLocalWindow(event)) {
         return { started: false, error: "Local Cybeck window required." };
     }
     if (!operationsAccess.isGranted()) return { started: false, error: "Enable console access for this session first." };
@@ -438,15 +494,15 @@ ipcMain.handle("run-operations-command", async (event, shell, command) => {
 });
 
 ipcMain.handle("stop-operations-command", (event) => {
-    if (!mainWindow || event.sender !== mainWindow.webContents) return false;
+    if (!isAuthenticatedLocalWindow(event)) return false;
     return activeOperationsCommand?.stop() || false;
 });
 
 ipcMain.handle("get-remote-system", (event) =>
-    isLocalOperationsWindow(event) ? remoteTarget : null);
+    isAuthenticatedLocalWindow(event) ? remoteTarget : null);
 
 ipcMain.handle("connect-remote-system", async (event, supplied) => {
-    if (!isLocalOperationsWindow(event)) return { connected: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { connected: false, error: "Sign in required." };
     if (remoteConnecting || activeRemoteCommand) return { connected: false, error: "Wait for the current remote operation." };
     let target;
     try { target = validateTarget(supplied); }
@@ -479,7 +535,7 @@ ipcMain.handle("connect-remote-system", async (event, supplied) => {
 });
 
 ipcMain.handle("disconnect-remote-system", (event) => {
-    if (!isLocalOperationsWindow(event)) return false;
+    if (!isAuthenticatedLocalWindow(event)) return false;
     remoteGeneration += 1;
     remoteTarget = null;
     activeRemoteCommand?.stop();
@@ -487,7 +543,7 @@ ipcMain.handle("disconnect-remote-system", (event) => {
 });
 
 function startRemoteOperation(event, command) {
-    if (!isLocalOperationsWindow(event)) return { started: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { started: false, error: "Sign in required." };
     if (!remoteTarget) return { started: false, error: "Connect to a remote computer first." };
     if (activeRemoteCommand || remoteConnecting) return { started: false, error: "A remote operation is already running." };
     const sender = event.sender;
@@ -504,10 +560,10 @@ function startRemoteOperation(event, command) {
 ipcMain.handle("run-remote-command", (event, command) => startRemoteOperation(event, command));
 ipcMain.handle("get-remote-usage", (event) => startRemoteOperation(event, remoteTarget ? resourceCommand(remoteTarget.platform) : ""));
 ipcMain.handle("stop-remote-command", (event) =>
-    isLocalOperationsWindow(event) ? activeRemoteCommand?.stop() || false : false);
+    isAuthenticatedLocalWindow(event) ? activeRemoteCommand?.stop() || false : false);
 
 ipcMain.handle("open-remote-desktop", (event, suppliedHost) => {
-    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { opened: false, error: "Sign in required." };
     try {
         const host = validateHost(suppliedHost);
         const child = spawn(path.join(process.env.SystemRoot || "C:\\Windows", "System32", "mstsc.exe"),
@@ -519,13 +575,13 @@ ipcMain.handle("open-remote-desktop", (event, suppliedHost) => {
 });
 
 ipcMain.handle("check-remote-desktop", async (event, suppliedHost) => {
-    if (!isLocalOperationsWindow(event)) return { reachable: false, detail: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { reachable: false, detail: "Sign in required." };
     try { return await checkRemoteDesktop(suppliedHost); }
     catch (error) { return { reachable: false, detail: error.message }; }
 });
 
 ipcMain.handle("open-quick-assist", async (event) => {
-    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { opened: false, error: "Sign in required." };
     try {
         await shell.openExternal("ms-quick-assist:");
         return { opened: true };
@@ -533,7 +589,7 @@ ipcMain.handle("open-quick-assist", async (event) => {
 });
 
 ipcMain.handle("open-anydesk-session", async (event, suppliedAddress) => {
-    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { opened: false, error: "Sign in required." };
     try {
         const address = validateAnyDeskAddress(suppliedAddress);
         const file = findAnyDesk(selectedAnyDeskPath);
@@ -549,7 +605,7 @@ ipcMain.handle("open-anydesk-session", async (event, suppliedAddress) => {
 });
 
 ipcMain.handle("close-anydesk-app", async (event) => {
-    if (!isLocalOperationsWindow(event)) return { closed: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { closed: false, error: "Sign in required." };
     if (process.platform !== "win32") return { closed: false, error: "Available on Windows only." };
     try {
         await execFileAsync("taskkill.exe", ["/IM", "AnyDesk.exe", "/T", "/F"], { windowsHide: true, timeout: 10000 });
@@ -559,14 +615,14 @@ ipcMain.handle("close-anydesk-app", async (event) => {
 
 let selectedAnyDeskPath = null;
 ipcMain.handle("get-anydesk-status", (event) => {
-    if (!isLocalOperationsWindow(event)) return { found: false };
+    if (!isAuthenticatedLocalWindow(event)) return { found: false };
     const file = findAnyDesk(selectedAnyDeskPath);
     if (file) selectedAnyDeskPath = file;
     return { found: Boolean(file), path: file };
 });
 
 ipcMain.handle("choose-anydesk-executable", async (event) => {
-    if (!isLocalOperationsWindow(event)) return { found: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { found: false, error: "Sign in required." };
     const result = await dialog.showOpenDialog(mainWindow, {
         title: "Select the signed AnyDesk executable",
         properties: ["openFile"], filters: [{ name: "Windows applications", extensions: ["exe"] }]
@@ -579,7 +635,7 @@ ipcMain.handle("choose-anydesk-executable", async (event) => {
 });
 
 ipcMain.handle("open-anydesk-download", async (event) => {
-    if (!isLocalOperationsWindow(event)) return { opened: false, error: "Local Cybeck window required." };
+    if (!isAuthenticatedLocalWindow(event)) return { opened: false, error: "Sign in required." };
     try {
         await shell.openExternal(ANYDESK_DOWNLOAD_URL);
         return { opened: true };
@@ -802,6 +858,33 @@ $rows | ConvertTo-Json -Depth 3 -Compress`;
 
     console.log("[NETWORK] Current network:", networkInfo);
     return networkInfo;
+});
+
+ipcMain.handle("run-network-repair", async (event, action) => {
+    if (!isAuthenticatedLocalWindow(event)) return { success: false, error: "Sign in required." };
+    if (networkRepairRunning) return { success: false, error: "Another network repair is already running." };
+    let spec;
+    try { spec = networkRepairSpec(action); }
+    catch (error) { return { success: false, error: error.message }; }
+    const confirmation = await dialog.showMessageBox(mainWindow, {
+        type: action === "reset-network" ? "warning" : "question",
+        buttons: ["Cancel", spec.title], defaultId: 0, cancelId: 0,
+        title: "Confirm Windows network repair",
+        message: `${spec.title}?`,
+        detail: `${spec.detail}\n\nWindows may request administrator permission. Cybeck will keep monitoring and refresh the displayed connection after the action.`
+    });
+    if (confirmation.response !== 1) return { success: false, canceled: true };
+    networkRepairRunning = true;
+    try {
+        const encoded = Buffer.from(spec.script, "utf16le").toString("base64");
+        const launcher = `$process = Start-Process -FilePath \"$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand','${encoded}') -Verb RunAs -Wait -PassThru; exit $process.ExitCode`;
+        await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", launcher], {
+            windowsHide: true, timeout: 120000, maxBuffer: 256 * 1024
+        });
+        return { success: true, action, message: spec.restartRequired ? `${spec.title} completed. Restart Windows to finish the reset.` : `${spec.title} completed.`, restartRequired: spec.restartRequired };
+    } catch (error) {
+        return { success: false, error: `Windows did not complete ${spec.title.toLowerCase()}. Administrator approval may have been canceled, or Windows reported an error.` };
+    } finally { networkRepairRunning = false; }
 });
 
 // ======================================================

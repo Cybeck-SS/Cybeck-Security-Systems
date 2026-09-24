@@ -486,5 +486,6 @@
         pollAttempts();
         setInterval(pollAttempts, 2000);
     }
-    initialize();
+    if (window.cybeckProfileReady) initialize();
+    else window.addEventListener("cybeck-profile-ready", initialize, { once: true });
 })();

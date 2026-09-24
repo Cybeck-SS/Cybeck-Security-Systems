@@ -11,7 +11,16 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
+  <section id="profile-gate" class="profile-gate" aria-label="Cybeck profile sign in">
+    <div class="profile-gate-brand"><img src="assets/logo.png" alt="Cybeck Security Systems company logo"><div><span>CYBECK SECURITY SYSTEMS</span><h1>Secure profile access</h1><p>Sign in to open your Dashboard, Network Monitor, Operations, Tasks, Notes, and profile data.</p></div></div>
+    <div class="profile-gate-card">
+      <span class="eyebrow">PROFILE SIGN IN</span><h2 id="profile-gate-heading">Welcome to Cybeck</h2><p id="profile-gate-copy">Choose your local profile and enter its password.</p>
+      <div id="profile-login-view"><label>PROFILE<select id="profile-gate-select"></select></label><label>PASSWORD<input id="profile-gate-password" type="password" maxlength="256" autocomplete="current-password"></label><button type="button" id="profile-gate-login" class="vault-unlock-button">SIGN IN TO CYBECK</button><div class="profile-gate-actions"><button type="button" id="profile-gate-create">Create account</button><button type="button" id="profile-gate-delete">Delete profile</button></div></div>
+      <form id="profile-gate-create-form" hidden><div class="vault-form-row"><label>PROFILE NAME<input id="profile-gate-name" maxlength="48" required autocomplete="off"></label><label>ROLE<input id="profile-gate-role" maxlength="48" autocomplete="off" placeholder="Administrator"></label></div><label>NEW PASSWORD<input id="profile-gate-new-password" type="password" minlength="10" maxlength="256" required autocomplete="new-password"></label><label>CONFIRM PASSWORD<input id="profile-gate-confirm" type="password" minlength="10" maxlength="256" required autocomplete="new-password"></label><div class="profile-gate-actions"><button type="submit" class="vault-unlock-button">CREATE ACCOUNT AND ENTER</button><button type="button" id="profile-gate-cancel">Cancel</button></div></form>
+      <p id="profile-gate-status" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+  <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar">
       <div class="brand-mini">
         <img src="assets/logo.png" alt="Cybeck SECURITY SYSTEMS logo">
@@ -72,7 +81,7 @@
       <div class="sidebar-footer">
         <span class="status-dot"></span>
         <span>Local system</span>
-        <span class="version">v0.1.15</span>
+        <span class="version">v0.1.16</span>
       </div>
     </aside>
 
@@ -85,6 +94,9 @@
         
 
 <div class="window-mode-controls">
+
+    <span id="active-profile-name" class="active-profile-name"></span>
+    <button id="profile-sign-out" class="profile-sign-out" type="button" title="Lock Cybeck and return to profile sign in">Sign out</button>
 
     <button
         id="window-mode-btn"
@@ -476,6 +488,18 @@
                 <span>STRONG SIGNAL</span>
               </div>
             </div>
+          </article>
+
+          <article class="network-panel network-repair-panel">
+            <div class="network-panel-heading"><span class="network-panel-icon">↻</span><div><h3>Network Repair</h3><p>Run controlled Windows connection repairs. Connectivity may stop briefly and Windows may request administrator permission.</p></div></div>
+            <div class="network-repair-actions">
+              <button type="button" data-network-repair="renew-dhcp"><strong>Renew DHCP</strong><span>Release and renew IP addresses</span></button>
+              <button type="button" data-network-repair="flush-dns"><strong>Flush DNS</strong><span>Clear cached DNS lookups</span></button>
+              <button type="button" data-network-repair="reconnect-wifi"><strong>Reconnect Wi-Fi</strong><span>Reconnect the current Wi-Fi profile</span></button>
+              <button type="button" data-network-repair="restart-adapter"><strong>Restart Adapter</strong><span>Restart the active default-route adapter</span></button>
+              <button type="button" class="network-repair-danger" data-network-repair="reset-network"><strong>Reset Networking</strong><span>Reset Winsock and TCP/IP; restart required</span></button>
+            </div>
+            <p id="network-repair-status" class="network-repair-status" role="status" aria-live="polite">Ready. Each repair requires confirmation.</p>
           </article>
 
           <div class="network-information-grid">
@@ -1037,14 +1061,14 @@
         </div>
 
         <h3>
-  Version <span id="release-version">0.1.15</span>
+  Version <span id="release-version">0.1.16</span>
 </h3>
 
 <ul class="release-notes">
-  <li>Replaces crowded Vault profile cards with a compact dropdown.</li>
-  <li>Adds password-confirmed profile deletion for removing duplicates.</li>
-  <li>Removes decorative Vault wording that had no application function.</li>
-  <li>Refreshes the complete in-app release history through v0.1.15.</li>
+  <li>Requires an authenticated Cybeck profile before the dashboard opens.</li>
+  <li>Separates notes, tasks, incidents, and security history by profile.</li>
+  <li>Adds guided DHCP, DNS, Wi-Fi, adapter, and Windows network repair actions.</li>
+  <li>Adds automated checks that verify every visible button has a working handler.</li>
 </ul>
 
       </article>
@@ -1059,6 +1083,7 @@
         RELEASE HISTORY
       </div>
 
+      <div class="release-entry"><div class="release-version">v0.1.16</div><div class="release-description"><strong>Profile Sessions and Network Repair</strong><span>Required profile authentication, profile-specific work and monitoring records, secure sign-out cleanup, five guided network repair actions, and automated button wiring checks.</span></div><div class="release-date">24 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.15</div><div class="release-description"><strong>Vault Profile Management</strong><span>Compact profile dropdown, password-confirmed profile deletion, duplicate cleanup, and removal of nonfunctional decorative wording.</span></div><div class="release-date">24 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.14</div><div class="release-description"><strong>Vault Visual Alignment</strong><span>Approved split login layout, official Cybeck logo, visible authentication panel, responsive profile cards, and refreshed release records.</span></div><div class="release-date">24 SEP 2026</div></div>
       <div class="release-entry"><div class="release-version">v0.1.13</div><div class="release-description"><strong>Vault Profiles and Workflow</strong><span>Protected local Vault profiles, newest-first connections, grouped incidents, fluid urgency cycle, and Notepad-compatible note history.</span></div><div class="release-date">21 SEP 2026</div></div>
@@ -1096,6 +1121,7 @@
 
 </section>
 
+  <script src="profile-session.js"></script>
   <script src="renderer.js"></script>
   <script src="security-operations.js"></script>
   <script src="operations-console.js"></script>

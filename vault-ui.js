@@ -84,9 +84,10 @@
         if (result.error) { status(result.error, true); return; }
         profiles.push(result.profile); selectedProfileId = result.profile.id; get("vault-create-form").reset(); renderProfiles(); showUnlocked(result.profile);
     });
-    get("vault-lock").addEventListener("click", async () => { await bridge.lockVault(); get("vault-unlocked-view").hidden = true; get("vault-locked-view").hidden = false; renderProfiles(); status("Vault locked for this session."); });
+    get("vault-lock").addEventListener("click", async () => { await bridge.lockVault(); window.location.reload(); });
     const reveal = (button, input) => button.addEventListener("click", () => { input.type = input.type === "password" ? "text" : "password"; button.setAttribute("aria-pressed", String(input.type === "text")); });
     reveal(get("vault-show-password"), get("vault-password"));
     document.querySelectorAll("[data-vault-reveal]").forEach((button) => reveal(button, get(button.dataset.vaultReveal)));
+    window.addEventListener("cybeck-profile-ready", () => refresh().catch((error) => status(`Vault could not refresh: ${error.message}`, true)));
     refresh().catch((error) => status(`Vault could not start: ${error.message}`, true));
 })();

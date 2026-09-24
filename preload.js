@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld(
                 "run-network-diagnostics"
             );
         },
+        runNetworkRepair: (action) => ipcRenderer.invoke("run-network-repair", action),
 
         getActiveConnections: () => ipcRenderer.invoke("get-active-connections"),
         getConnectionAttempts: () => ipcRenderer.invoke("get-connection-attempts"),
@@ -76,7 +77,7 @@ contextBridge.exposeInMainWorld(
         importNoteFile: () => ipcRenderer.invoke("import-note-file"),
         getVaultSession: () => ipcRenderer.invoke("get-vault-session"),
         createVaultProfile: (profile) => ipcRenderer.invoke("create-vault-profile", profile),
-        deleteVaultProfile: (profileId, password) => ipcRenderer.invoke("delete-vault-profile", profileId, password),
+        deleteVaultProfile: (profileId, password, deleteData = false) => ipcRenderer.invoke("delete-vault-profile", profileId, password, deleteData),
         unlockVault: (profileId, password) => ipcRenderer.invoke("unlock-vault", profileId, password),
         lockVault: () => ipcRenderer.invoke("lock-vault"),
         onRemoteCommandEvent: (callback) => ipcRenderer.on("remote-command-event", (_event, data) => callback(data)),
